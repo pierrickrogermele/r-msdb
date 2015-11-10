@@ -639,7 +639,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 						#           HPLC (C18) 25mn QTOF (Bis)                  --> HPLC..C18..25mn.QTOF..Bis.
 	  					#           ZICpHILIC 150*5*2.1 Shimadzu-Exactive-42mn  --> ZICpHILIC.150.5.2.1.Shimadzu.Exactive.42mn
 						# This can be an issue, since we loose the formating.
-						col_id <- .normalize_column_name(names(peaks)[[c]])
+						col_id <- names(peaks)[[c]]
 						time <- peaks[[c]][[1]] * 60 # Read and convert retention time in seconds.
 						if (is.null(rt) || ! col_id %in% names(rt))
 							rt[[col_id]] <- list(time)

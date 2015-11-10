@@ -52,7 +52,6 @@ test.columns <- function() {
 	checkTrue(class(get.db()$getChromCol()) == 'character')
 	checkTrue(length(get.db()$getChromCol()) > 0)
 	molids <- get.db()$getMoleculeIds()
-	checkTrue(length(get.db()$getChromCol(molids[1])) > 0)
 	checkTrue(length(get.db()$getChromCol(molids[1:10])) > 0)
 }
 

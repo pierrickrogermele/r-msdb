@@ -99,7 +99,7 @@
 
 	<!-- CLEAN -->
 	<target name="clean">
-		<delete dir="cache"/>
+		<delete dir="xlsdb/cache"/>
 		<delete dir="." includes="*-output.tsv"/>
 		<delete dir="." includes="*-output-*.tsv"/>
 		<delete dir="." includes="*-output.html"/>
