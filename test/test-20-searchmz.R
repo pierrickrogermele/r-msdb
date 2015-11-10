@@ -92,12 +92,14 @@ test.precursors.lists <- function() {
 }
 
 test.same.cols <- function() {
+	x <- read.table('mzrt-input-small-morecols.tsv', header = TRUE)
+	extra.cols <- colnames(x)[ ! colnames(x) %in% c('mz', 'rt')]
 	call.search.mz(c('-m pos', '-c uplc-c8,uplc-c18', '--rttolx 5', '--rttoly 0.8', '-i mzrt-input-small-morecols.tsv', '-o mzrt-output.tsv'))
 	df <- read.table('mzrt-output.tsv', header = TRUE)
-	checkTrue( ! 'zoup' %in% colnames(df))
+	checkTrue( ! any(extra.cols %in% colnames(df)))
 	call.search.mz(c('-m pos', '-c uplc-c8,uplc-c18', '--rttolx 5', '--rttoly 0.8', '-i mzrt-input-small-morecols.tsv', '-o mzrt-output.tsv', '--same-cols'))
 	df <- read.table('mzrt-output.tsv', header = TRUE)
-	checkTrue('zoup' %in% colnames(df))
+	checkTrue(all(extra.cols %in% colnames(df)))
 }
 
 test.same.rows <- function() {
