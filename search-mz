@@ -1,0 +1,551 @@
+#!/usr/bin/env Rscript
+# vi: ft=R
+args <- commandArgs(trailingOnly = F)
+script_path <- sub("--file=","",args[grep("--file=",args)])
+library(getopt)
+source(file.path(dirname(script_path), 'common.R'), chdir = TRUE)
+source(file.path(dirname(script_path), 'MsFileDb.R'), chdir = TRUE)
+source(file.path(dirname(script_path), 'MsPeakForestDb.R'), chdir = TRUE)
+source(file.path(dirname(script_path), 'MsXlsDb.R'), chdir = TRUE)
+source(file.path(dirname(script_path), 'Ms4TabSqlDb.R'), chdir = TRUE)
+source(file.path(dirname(script_path), 'MsDbLogger.R'), chdir = TRUE)
+source(file.path(dirname(script_path), 'MsDbInputDataFrameStream.R'), chdir = TRUE)
+source(file.path(dirname(script_path), 'MsDbOutputDataFrameStream.R'), chdir = TRUE)
+source(file.path(dirname(script_path), '../r-lib/htmlhlp.R'), chdir = TRUE)
+source(file.path(dirname(script_path), '../r-lib/strhlp.R'), chdir = TRUE)
+source(file.path(dirname(script_path), '../r-lib/fshlp.R'), chdir = TRUE)
+source(file.path(dirname(script_path), '../r-biodb/KeggConn.R'), chdir = TRUE)
+source(file.path(dirname(script_path), '../r-biodb/HmdbConn.R'), chdir = TRUE)
+source(file.path(dirname(script_path), '../r-biodb/ChebiConn.R'), chdir = TRUE)
+source(file.path(dirname(script_path), '../r-biodb/PubchemConn.R'), chdir = TRUE)
+
+#############
+# CONSTANTS #
+#############
+
+POS_MODE <- 'pos'
+NEG_MODE <- 'neg'
+
+# Authorized database types
+MSDB.XLS <- 'xls'
+MSDB.4TABSQL <- '4tabsql'
+MSDB.FILE <- 'file'
+MSDB.PEAKFOREST <- 'peakforest'
+MSDB.VALS <- c(MSDB.XLS, MSDB.4TABSQL, MSDB.FILE, MSDB.PEAKFOREST)
+
+# Authorized mode values
+MSDB.MODE.VALS <- c(POS_MODE, NEG_MODE)
+
+# Default 
+MSDB.DFT.FIELDS <- concat.kv.list(msdb.get.dft.db.fields())
+MSDB.DFT.MS.MODES <- concat.kv.list(MSDB.DFT.MODES)
+
+PROG <- sub('^.*/([^/]+)$', '\\1', commandArgs()[4], perl = TRUE)
+
+##############
+# PRINT HELP #
+##############
+
+print.help <- function(spec, status = 0) {
+	cat(getopt(spec, usage = TRUE, command = PROG))
+	q(status = status)
+}
+
+#############
+# READ ARGS #
+#############
+
+read_args <- function() {
+
+	# Default values
+	dft_mzshift <- 0 # in ppm
+	dft_mzprec <- 5 # in ppm
+	dft_one_line <- FALSE
+	precursor.match.dft <- FALSE
+	dft.precusor.rt.match <- 5
+	dft.same.rows <- FALSE
+	dft.same.cols <- FALSE
+	dft.check.cols <- FALSE
+	dft.debug <- FALSE
+	dft.all.cols <- FALSE
+	dft.first.val <- FALSE
+	dft.excel2011comp <- FALSE
+	dft.input.col.names <- concat.kv.list(MSDB.DFT.INPUT.FIELDS)
+	dft.output.col.names <- concat.kv.list(MSDB.DFT.OUTPUT.FIELDS)
+	dft.precursors.pos <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
+	dft.precursors.neg <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
+	dft.no.main.table.in.html.output <- FALSE
+
+	# options
+	spec = matrix(c(
+		'help',             'h',            0,  'logical',      'Print this help.',
+		'mode',             'm',            1,  'character',    paste0('MS mode. Possible values are:', paste(MSDB.MODE.VALS, collapse = ", "), '.'),
+		'mzshift',          's',            1,  'numeric',      paste0('Shift on m/z, in ppm. Default is ', dft_mzshift,'.'),
+		'mzprec',           'p',            1,  'numeric',      paste0('Tolerance on m/z, in ppm. Default is ', dft_mzprec,'.'),
+		'rttol',            'r',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
+		'rttolx',           'x',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
+		'rttoly',           'y',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
+		'rtcol',            'c',            1,  'character',    paste0('Chromatographic column to use. Unset by default. If set, use the corresponding column to filter on retention times, if retention times are provided.'),
+		'all-cols',         NA_character_,  0,  'logical',      'Use all available chromatographic columns to match retention times.',
+		'check-cols',       NA_character_,  0,  'logical',      'Check that the chromatographic column names specified with option -c really exist.',
+		'list-cols',        NA_character_,  0,  'logical',      'List all chromatographic columns present in the database. Write list inside the file specified by -o option.',
+		'same-rows',        'a',            0,  'logical',      'If set, output exactly the same number of rows as the input. This means that in case of multiple matches for one mz, then only one line is output (i.e.: the mz value is not duplicated on several lines). In the main output file, an "ms.matching" column is output with inside, for each mz, a comma separated list of matched component/molecule IDs. If unset, then only the main output file is used, and one single is written to it with one line per peak match, and eventual mz line duplicated if there are multiple matches for this mz.',
+		'same-cols',        'b',            0,  'logical',      'If set, output the same columns as inside the input. All input columns are copied to the output.',
+		'input-file',       'i',            1,  'character',    'Set input file.',
+		'output-file',      'o',            1,  'character',    'Set file to use for the main output.',
+		'peak-output-file', NA_character_,  1,  'character',    'If set and if --same-rows is set, then output all matches inside the specified file, with one mz match per line. The output columns are: mz, rt, id, col, colrt, composition, attribution. This means that if an mz value is matched several times, then it will repeated on several lines, with one match description per line.',
+		'html-output-file', NA_character_,  1,  'character',    'Set file to use for the HTML output.',
+		'no-main-table-in-html-output',  NA_character_,  0,  'logical',      'Do not display main table in HTML output.',
+		'precursor-match',  NA_character_,  0,  'logical',      'Remove peaks whose molecule precursor peak has not been matched. Unset by default.',
+		'precursor-rt-tol', NA_character_,  1,  'numeric',      paste0('Precursor retention time tolerance. Only used when precursor-match is enabled. Default is ', dft.precusor.rt.match, '.'),
+		'pos-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in positive mode. Default is "', dft.precursors.pos, '".'),
+		'neg-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in negative mode. Default is "', dft.precursors.neg, '".'),
+		'input-col-names',  NA_character_,  1,  'character',    paste0('Set the input column names. Default is "', dft.input.col.names, '".'),
+		'output-col-names', NA_character_,  1,  'character',    paste0('Set the output column names. Default is "', dft.output.col.names, '".'),
+		'molids-sep',       NA_character_,  1,  'character',    paste0('Set character separator used to when concatenating molecule IDs in output. Default is "', MSDB.DFT.MATCH.SEP , '".'),
+		'first-val',        NA_character_,  0,  'logical',      'Keep only the first value in multi-value fields. Unset by default.',
+		'excel2011comp',            NA_character_,  0,  'logical',      'Excel 2011 compatiblity mode. Output ASCII text files instead of UTF-8 files, where greek letters are replaced with their latin names, plusminus sign is replaced with +- and apostrophe is replaced with \"prime\". All other non-ASCII characters are repladed with underscore.',
+		'database',         'd',            1,  'character',    paste0('Set database to use: "xls" for an Excel database, "file" for a single file database, "4tabsql" for a 4Tab SQL database, and "peakforest" for a connection to PeakForest database.'),
+		'url',              NA_character_,  1,  'character',    'URL of database. For "peakforest" database it is the HTTP URL, for the "xls" database it is the path to the directory containing the Excel files, for the "file" database it is the path to the file database and for the "4tabsql" database it is the IP address of the server.',
+		'cache-dir',        NA_character_,  1,  'character',    'Path to directory where to store cache files. Only used when database flag is set to "xls".',
+		'dbname',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
+		'user',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
+		'password',      NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
+		'db-fields',        NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the field names to be used in the single file database (option --db-file). Default is "', MSDB.DFT.FIELDS, '".'),
+		'db-ms-modes',      NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the MS modes to be used in the single file database (option --db-file). Default is "', MSDB.DFT.MS.MODES, '".'),
+		'print-db-fields',  NA_character_,  0,  'logical',      'Print default value of --db-fields',
+		'print-db-ms-modes',NA_character_,  0,  'logical',      'Print default value of --db-ms-modes',
+		'print-input-col-names',    NA_character_,  0,  'logical',  'Print default value of --input-col-names.',
+		'print-output-col-names',   NA_character_,  0,  'logical',  'Print default value of --output-col-names.',
+		'print-molids-sep',         NA_character_,  0,  'logical',  'Print default value of --molids-sep.',
+		'print-pos-prec',           NA_character_,  0,  'logical',  'Print default value of --pos-prec.',
+		'print-neg-prec',           NA_character_,  0,  'logical',  'Print default value of --neg-prec.',
+		'debug',            NA_character_,  0,  'logical',      'Set debug mode.'
+		), byrow = TRUE, ncol = 5)
+# TODO split table in several blocks, bind it and then sort it.
+
+	opt <- getopt(spec)
+
+	# help
+	if ( ! is.null(opt$help))
+		print.help(spec)
+
+	# Print default values
+	if ( ! is.null(opt[['print-input-col-names']])) {
+		cat(dft.input.col.names)
+		q(status = 0)
+	}
+	if ( ! is.null(opt[['print-output-col-names']])) {
+		cat(dft.output.col.names)
+		q(status = 0)
+	}
+	if ( ! is.null(opt[['print-molids-sep']])) {
+		cat(MSDB.DFT.MATCH.SEP)
+		q(status = 0)
+	}
+	if ( ! is.null(opt[['print-pos-prec']])) {
+		cat(dft.precursors.pos)
+		q(status = 0)
+	}
+	if ( ! is.null(opt[['print-neg-prec']])) {
+		cat(dft.precursors.neg)
+		q(status = 0)
+	}
+
+	# Set default values
+	opt <- .set.db.conn.dft(opt)
+	if ( ! is.null(opt$rtcol) && opt$rtcol == '')
+		opt$rtcol <- NULL
+	if (is.null(opt[['precursor-match']]))
+		opt[['precursor-match']] <- precursor.match.dft
+	if (is.null(opt[['precursor-rt-tol']]))
+		opt[['precursor-rt-tol']] <- dft.precusor.rt.match
+	if (is.null(opt[['pos-prec']]))
+		opt[['pos-prec']] <- dft.precursors.pos
+	if (is.null(opt[['neg-prec']]))
+		opt[['neg-prec']] <- dft.precursors.neg
+	if (is.null(opt$mzprec))
+		opt$mzprec <- dft_mzprec
+	if (is.null(opt$mzshift))
+		opt$mzshift <- dft_mzshift
+	if (is.null(opt[['excel2011comp']]))
+		opt[['excel2011comp']] <- dft.excel2011comp
+	if (is.null(opt[['same-cols']]))
+		opt[['same-cols']] <- dft.same.cols
+	if (is.null(opt[['same-rows']]))
+		opt[['same-rows']] <- dft.same.rows
+	if (is.null(opt[['check-cols']]))
+		opt[['check-cols']] <- dft.check.cols
+	if (is.null(opt[['input-col-names']]))
+		opt[['input-col-names']] <- dft.input.col.names
+	if (is.null(opt[['output-col-names']]))
+		opt[['output-col-names']] <- dft.output.col.names
+	if (is.null(opt[['first-val']]))
+		opt[['first-val']] <- dft.first.val
+	if (is.null(opt[['molids-sep']]))
+		opt[['molids-sep']] <- MSDB.DFT.MATCH.SEP
+	if (is.null(opt[['debug']]))
+		opt[['debug']] <- dft.debug
+	if (is.null(opt[['all-cols']]))
+		opt[['all-cols']] <- dft.all.cols
+	if (is.null(opt[['no-main-table-in-html-output']]))
+		opt[['no-main-table-in-html-output']] <- dft.no.main.table.in.html.output
+
+	# Parse retention time columns
+	if ( ! is.null(opt$rtcol))
+		opt$rtcol <- strsplit(opt$rtcol, ',')[[1]]
+
+	# Parse input column names
+	if ( ! is.null(opt[['input-col-names']])) {
+		custcols <- split.kv.list(opt[['input-col-names']])
+		dftcols <- split.kv.list(dft.input.col.names)
+		opt[['input-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
+	}
+
+	# Parse output column names
+	if ( ! is.null(opt[['output-col-names']])) {
+		custcols <- split.kv.list(opt[['output-col-names']])
+		dftcols <- split.kv.list(dft.output.col.names)
+		opt[['output-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
+	}
+
+	# Parse lists of precursors
+	if ( ! is.null(opt[['pos-prec']]))
+		opt[['pos-prec']] <- split(opt[['pos-prec']], unlist = TRUE)
+	if ( ! is.null(opt[['neg-prec']]))
+		opt[['neg-prec']] <- split(opt[['neg-prec']], unlist = TRUE)
+
+	# Check values
+	error <- .check.db.conn.opts(opt)
+	if (is.null(opt[['output-file']])) {
+		warning("You must set a path for the output file.")
+		error <- TRUE
+	}
+	if (is.null(opt[['list-cols']])) {
+		if (is.null(opt[['input-file']])) {
+			warning("You must provide an input file.")
+			error <- TRUE
+		}
+		if (is.null(opt$mode) || ( ! opt$mode %in% MSDB.MODE.VALS)) {
+			warning("You must specify a mode through the --mode option.")
+			error <- TRUE
+		}
+		if (is.null(opt$mzprec)) {
+			warning("You must set a precision in MZ with the --mzprec option.")
+			error <- TRUE
+		}
+		if ( ( ! is.null(opt$rtcol) || opt[['all-cols']]) && (is.null(opt$rttolx) || is.null(opt$rttoly))) {
+			warning("When chromatographic columns are set, you must provide values for --rttolx and -rttoly.")
+			error <- TRUE
+		}
+	}
+
+	# help
+	if (error)
+		print.help(spec, status = 1)
+
+	return(opt)
+}
+	
+	##################################################
+	# SET DATABASE CONNECTION OPTIONS DEFAULT VALUES #
+	#################################################
+	
+	.set.db.conn.dft <- function(opt) {
+	
+		# Set default values
+		if ( opt$database == MSDB.XLS && ! is.null(opt$url) && is.null(opt[['cache-dir']]))
+			opt[['cache-dir']] <- file.path(opt$url, 'cache')
+		if (is.null(opt[['db-fields']]))
+		    opt[['db-fields']] <- MSDB.DFT.FIELDS
+		if (is.null(opt[['db-ms-modes']]))
+		    opt[['db-ms-modes']] <- MSDB.DFT.MS.MODES
+	
+		# Parse input column names
+		if ( ! is.null(opt[['db-fields']])) {
+			cust <- split.kv.list(opt[['db-fields']])
+			opt[['db-fields']] <- split.kv.list(MSDB.DFT.FIELDS)
+			opt[['db-fields']][names(cust)] <- cust
+		}
+	
+		# Parse MS modes
+		if ( ! is.null(opt[['db-ms-modes']]))
+			opt[['db-ms-modes']] <- split.kv.list(opt[['db-ms-modes']])
+	
+		return(opt)
+	}
+	
+	#####################################
+	# CHECK DATABASE CONNECTION OPTIONS #
+	#####################################
+	
+	.check.db.conn.opts <- function(opt) {
+
+		# Print default values
+		if ( ! is.null(opt[['print-db-fields']])) {
+			cat(MSDB.DFT.FIELDS)
+			q(status = 0)
+		}
+		if ( ! is.null(opt[['print-db-ms-modes']])) {
+			cat(MSDB.DFT.MS.MODES)
+			q(status = 0)
+		}
+	
+		# Check values
+		error <- FALSE
+		if (is.null(opt$database)) {
+			warning("You must provide a database type through --database option.")
+			error <- TRUE
+		}
+		if ( ! opt$database %in% MSDB.VALS) {
+			warning(paste0("Invalid value \"", opt$database, "\" for --database option."))
+			error <- TRUE
+		}
+		if (opt$database == MSDB.FILE) {
+			if (is.null(opt$url)) {
+			warning("When using single file database, you must specify the location of the database file with option --url.")
+			error <- TRUE
+			}
+			if ( ! file.exists(opt$url)) {
+				warning(paste0("The file path \"", opt$url,"\" specified with --db-file option is not valid."))
+				error <- TRUE
+			}
+		}
+		if (opt$database == MSDB.XLS) {
+			if (is.null(opt$url)) {
+				warning("When using Excel database, you must specify the location of the Excel files directory with option --url.")
+				error <- TRUE
+			}
+			if ( ! file.exists(opt$url)) {
+				warning(paste0("The directory path \"", opt$url,"\" specified with --xls-dir option is not valid."))
+				error <- TRUE
+			}
+		}
+		if (opt$database == MSDB.4TABSQL) {
+			if (is.null(opt$url)) {
+				warning("When using 4Tab SQL database, you must specify the URL of the SQL server with option --url.")
+				error <- TRUE
+			}
+			if (is.null(opt[['db-name']])) {
+				warning("When using 4Tab SQL database, you must specify the database name through the --db-name option.")
+				error <- TRUE
+			}
+			if (is.null(opt[['db-user']])) {
+				warning("When using 4Tab SQL database, you must specify the database user through the --db-user option.")
+				error <- TRUE
+			}
+			if (is.null(opt[['db-password']])) {
+				warning("When using 4Tab SQL database, you must specify the database user password through the --db-password option.")
+				error <- TRUE
+			}
+		}
+		if (opt$database == MSDB.PEAKFOREST) {
+			if (is.null(opt$url)) {
+				warning("When using PeakForest database, you must specify the URL of the PeakForest server with option --url.")
+				error <- TRUE
+			}
+		}
+	
+		return(error)
+	}
+	
+	#############################
+	# DISPLAY COMMAND LINE HELP #
+	#############################
+	
+	.disp.cmd.line.help <- function(optspec, opt, prog, error = FALSE) {
+	
+		if ( ! is.null(opt$help) || error ) {
+			cat(getopt(optspec, usage = TRUE, command = prog))
+			q(status = 1)
+		}
+	}
+	
+	#################
+	# LOAD DATABASE #
+	#################
+	
+	.load.db <- function(opt) {
+
+		if (is.null(opt[['pos-prec']]) && is.null(opt[['neg-prec']])) {
+			precursors <- NULL
+		} else {
+			precursors <- list()
+			precursors[[MSDB.TAG.POS]] <- opt[['pos-prec']]
+			precursors[[MSDB.TAG.NEG]] <- opt[['neg-prec']]
+		}
+
+		db <- switch(opt$database,
+		             peakforest = MSPeakForestDb$new(url = opt$url),
+		             xls = MsXlsDb(db_dir = opt$url, cache_dir = opt[['cache-dir']]),
+		             '4tabsql' = Ms4TabSql(host = extract.address(opt$url), port = extract.port(opt$url), dbname = opt$dbname, user = opt$user, password = opt$password),
+		             file = MsFileDb(file = opt$url),
+		             NULL)
+		db$setInputFields(opt[['input-col-names']])
+		db$setOutputFields(opt[['output-col-names']])
+		db$setMolidsSep(opt[['molids-sep']])
+		db$setPrecursors(precursors)
+		db$setDbFields(opt[['db-fields']])
+		db$setMsModes(opt[['db-ms-modes']])
+		db$addObservers(MsDbLogger$new())
+
+		return(db)
+	}
+
+###############
+# OUTPUT HTML #
+###############
+
+output.html <- function(db, main, peaks, file, opt) {
+
+	# Replace public database IDs by URLs
+	if ( ! is.null(peaks))
+		for (extdb in c('kegg', 'hmdb', 'chebi', 'pubchem')) {
+			field <- db$getOutputFields()[[extdb]]
+			if (field %in% colnames(peaks))
+				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', switch(extdb, kegg = get.kegg.entry.url(id), hmdb = get.hmdb.entry.url(id), chebi = get.chebi.entry.url(id), pubchem = get.pubchem.entry.url(id)), '">', id, '</a>'), FUN.VALUE = '')
+		}
+
+	# Write HTML
+	html <- HtmlWriter(file = file)
+	html$writeBegTag('html')
+	html$writeBegTag('header')
+	html$writeTag('title', text = "LC/MS matching results")
+	html$writeBegTag('style')
+	html$write('table, th, td { border-collapse: collapse; }')
+	html$write('table, th { border: 1px solid black; }')
+	html$write('td { border-left: 1px solid black; border-right: 1px solid black; }')
+	html$write('th, td { padding: 5px; }')
+	html$write('th { background-color: LightBlue; }')
+	html$write('tr:nth-child(even) { background-color: LemonChiffon; }')
+	html$write('tr:nth-child(odd) { background-color: LightGreen; }')
+	html$writeEndTag('style')
+	html$writeEndTag('header')
+	html$writeBegTag('body')
+	html$writeTag('h1', text = "LC/MS matching")
+
+	# Write parameters
+	html$writeTag('h2', text = "Parameters")
+	html$writeBegTag('ul')
+	html$writeTag('li', paste0("Mode = ", opt$mode, "."))
+	html$writeTag('li', paste0("M/Z precision = ", opt$mzprec, "."))
+	html$writeTag('li', paste0("M/Z shift = ", opt$mzshift, "."))
+	html$writeTag('li', paste0("Precursor match = ", (if (opt[['precursor-match']]) "yes" else "no"), "."))
+	if (opt[['precursor-match']]) {
+		html$writeTag('li', paste0("Positive precursors = ", paste0(opt[['pos-prec']], collapse = ', '), "."))
+		html$writeTag('li', paste0("Negative precursors = ", paste0(opt[['neg-prec']], collapse = ', '), "."))
+	}
+	if ( ! is.null(opt$rtcol)) {
+		html$writeTag('li', paste0("Columns = ", paste(opt$rtcol, collapse = ", "), "."))
+		html$writeTag('li', paste0("RTX = ", opt$rttolx, "."))
+		html$writeTag('li', paste0("RTY = ", opt$rttoly, "."))
+		if (opt[['precursor-match']])
+			html$writeTag('li', paste0("RTZ = ", opt[['precursor-rt-tol']], "."))
+	}
+	html$writeEndTag('ul')
+
+	# Write results
+	html$writeTag('h2', text = "Results")
+	results <- FALSE
+	if ( ! is.null(main) && nrow(main) > 0 && ! opt[['no-main-table-in-html-output']]) {
+		html$writeTag('h3', text = "Main output")
+		html$writeTable(main)
+		results <- TRUE
+	}
+	if ( ! is.null(peaks) && nrow(peaks) > 0) {
+		html$writeTag('h3', text = "Matched peaks")
+		html$writeTable(peaks)
+		results <- TRUE
+	}
+	if ( ! results)
+		html$writeTag('p', 'None.')
+
+	html$writeEndTag('body')
+	html$writeEndTag('html')
+}
+
+########
+# MAIN #
+########
+
+options(error = function() { traceback(2) ; quit(status = 1) }, warn = 2 )
+
+# Read command line arguments
+opt <- read_args()
+
+if ( ! opt$debug) {
+	options(error = function() { quit(status = 1) }, warn = 0 )
+}
+
+# Load database
+db <- .load.db(opt)
+
+# Print columns
+if ( ! is.null(opt[['list-cols']])) {
+	cols <- db$getChromCol()
+	output <- data.frame(id = cols, title = cols, stringsAsFactors = FALSE)
+	df.write.tsv(output, file = opt[['output-file']])
+	q(status = 0)
+}
+
+# Read input
+if ( ! is.null(opt[['input-file']]) && ! file.exists(opt[['input-file']]))
+	stop(paste0("Input file \"", opt[['input-file']], "\" does not exist."))
+if (file.info(opt[['input-file']])$size > 0) {
+
+	# Load file into data frame
+	input <- read.table(file = opt[['input-file']], header = TRUE, sep = "\t")
+
+	# Convert each column that is identified by a number into a name
+	for (field in names(opt[['input-col-names']])) {
+		if ( ! opt[['input-col-names']][[field]] %in% colnames(input) && length(grep('^[0-9]+$', opt[['input-col-names']][[field]])) > 0) {
+			col.index <- as.integer(opt[['input-col-names']][[field]])
+			if (col.index < 1 || col.index > length(colnames(input)))
+				stop(paste0("No column n°", col.index, " for input field ", field, "."))
+			opt[['input-col-names']][[field]] <- colnames(input)[[col.index]]
+		}
+	}
+} else {
+	input <- data.frame()
+	input[[opt[['input-col-names']][['mz']]]] <- double()
+	input[[opt[['input-col-names']][['rt']]]] <- double()
+}
+
+# Check mz column
+if ( ! opt[['input-col-names']][['mz']] %in% colnames(input))
+	stop(paste0('No column named "', opt[['input-col-names']][['mz']], '" in input file.'))
+
+# Set columns 'all-cols' specified
+if (opt[['all-cols']])
+	opt$rtcol <- db$getChromCol()
+
+# Check chrom columns
+if (opt[['check-cols']] && ! is.null(opt$rtcol)) {
+	dbcols <- db$getChromCol()
+	unknown.cols <- opt$rtcol[ ! opt$rtcol %in% dbcols]
+	if (length(unknown.cols) > 0) {
+		stop(paste0("Unknown chromatographic column", (if (length(unknown.cols) > 1) 's' else ''), ': ', paste(unknown.cols, collapse = ', '), ".\nAllowed chromatographic column names are:\n", paste(dbcols, collapse = "\n")))
+	}
+}
+
+# Check that an RT column exists when using MZ/RT matching
+if ( ! is.null(opt$rtcol) && ! opt[['input-col-names']][['rt']] %in% colnames(input))
+	stop(paste0("You are running an MZ/RT match run on your input data, but no retention time column named '", opt[['input-col-names']][['rt']],"' can be found inside your input file."))
+
+# Set streams
+input.stream <- MsDbInputDataFrameStream$new(df = input, input.fields = opt[['input-col-names']])
+main.output <- MsDbOutputDataFrameStream$new(keep.unused = opt[['same-cols']], output.fields = opt[['output-col-names']], one.line = opt[['same-rows']], match.sep = opt[['molids-sep']], match.fields = list(molids = 'molid', molnames = 'molnames'), first.val = opt[['first-val']], ascii = opt[['excel2011comp']], nogreek = opt[['excel2011comp']], noapostrophe = opt[['excel2011comp']], noplusminus = opt[['excel2011comp']]) # TODO Make match.fields configurable
+peaks.output <- MsDbOutputDataFrameStream$new(keep.unused = opt[['same-cols']], output.fields = opt[['output-col-names']], first.val = opt[['first-val']], ascii = opt[['excel2011comp']], nogreek = opt[['excel2011comp']], noapostrophe = opt[['excel2011comp']], noplusminus = opt[['excel2011comp']])
+invisible(db$setInputStream(input.stream))
+db$addOutputStreams(c(main.output, peaks.output))
+
+# Search database
+mode <- if (opt$mode == POS_MODE) MSDB.TAG.POS else MSDB.TAG.NEG
+db$searchForMzRtList(mode = mode, shift = opt$mzshift, prec = opt$mzprec, rt.tol = opt$rttol, rt.tol.x = opt$rttolx, rt.tol.y = opt$rttoly, col = opt$rtcol, precursor.match = opt[['precursor-match']], precursor.rt.tol = opt[['precursor-rt-tol']], same.cols = opt[['same-cols']], same.rows = opt[['same-rows']], peak.table = ! is.null(opt[['peak-output-file']]))
+
+# Write output
+df.write.tsv(main.output$getDataFrame(), file = opt[['output-file']], row.names = FALSE)
+if ( ! is.null(opt[['peak-output-file']]))
+	df.write.tsv(peaks.output$getDataFrame(), file = opt[['peak-output-file']], row.names = FALSE)
+if ( ! is.null(opt[['html-output-file']]))
+	output.html(db = db, main = main.output$getDataFrame(), peaks = peaks.output$getDataFrame(), file = opt[['html-output-file']], opt = opt)

@@ -1,0 +1,8 @@
+.swp
+.*.swp
+*~
+*.autosave
+cache
+.DS_Store
+*.xlsx
+*.html

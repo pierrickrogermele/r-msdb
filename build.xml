@@ -1,0 +1,23 @@
+<project name="msdb" default="all">
+
+	<!-- ALL -->
+	<target name="all"/>
+
+	<!-- DOC -->
+	<target name="doc">
+		<ant dir="doc" inheritAll="false"/>
+	</target>
+
+	<!-- TEST -->
+	<target name="test">
+		<ant dir="test" inheritAll="false"/>
+	</target>
+
+	<!-- CLEAN -->
+	<target name="clean">
+		<ant dir="doc" target="clean" inheritAll="false"/>
+		<ant dir="test" target="clean" inheritAll="false"/>
+	</target>
+
+</project>
+

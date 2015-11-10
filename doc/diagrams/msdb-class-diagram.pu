@@ -1,0 +1,20 @@
+@startuml
+'scale 1600 width
+hide empty members
+
+' Database hierarchy
+abstract class MsDb
+abstract MsDb <|-- MsXlsDb
+MsDb <|-- Ms4TabSqlDb
+MsDb <|-- MsFileDb
+MsDb <|-- MsPeakForestDb
+
+' Observers
+interface MsDbObserver
+MsDbObserver <|.. MsDbChecker
+MsDbObserver <|.. MsDbLogger
+
+' Relation
+MsDb "1" --> "*" MsDbObserver
+
+@enduml

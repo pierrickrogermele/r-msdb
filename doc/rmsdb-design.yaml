@@ -1,0 +1,10 @@
+---
+title: RMsDb requirements and design
+author: Pierrick Roger Mele
+date: April 16, 2015
+header-includes:
+	- \usepackage{amsmath}
+	- \usepackage{algorithm}
+	- \usepackage[noend]{algpseudocode}
+	- \makeatletter\def\BState{\State\hskip-\ALG@thistlm}\makeatother
+---

@@ -1,0 +1,171 @@
+if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
+
+	library('stringr')
+	source('../r-lib/strhlp.R', chdir = TRUE)
+
+	#############
+	# CONSTANTS #
+	#############
+
+	# Field tags
+	MSDB.TAG.MZ <- 'mz'
+	MSDB.TAG.RT <- 'rt'
+	MSDB.TAG.MODE <- 'mode'
+	MSDB.TAG.MOLID <- 'molid'
+	MSDB.TAG.COL <- 'col'
+	MSDB.TAG.ATTR <- 'attr'
+	MSDB.TAG.COMP <- 'comp'
+	MSDB.TAG.MOLNAMES <- 'molnames'
+	MSDB.TAG.MOLCOMP <- 'molcomp'
+	MSDB.TAG.MOLMASS <- 'molmass'
+	MSDB.TAG.INCHI <- 'inchi'
+	MSDB.TAG.INCHIKEY <- 'inchikey'
+	MSDB.TAG.PUBCHEM <- 'pubchem'
+	MSDB.TAG.CHEBI <- 'chebi'
+	MSDB.TAG.HMDB <- 'hmdb'
+	MSDB.TAG.KEGG <- 'kegg'
+
+	# Mode tags
+	MSDB.TAG.POS           <- 'ms.pos'
+	MSDB.TAG.NEG           <- 'ms.neg'
+
+	# Fields containing multiple values
+	MSDB.MULTIVAL.FIELDS <- c(MSDB.TAG.MOLNAMES)
+	MSDB.MULTIVAL.FIELD.SEP <- ';'
+
+	# Default values
+	MSDB.DFT.PREC <- list()
+	MSDB.DFT.PREC[[MSDB.TAG.POS]] <- c("[(M+H)]+", "[M+H]+", "[(M+Na)]+", "[M+Na]+", "[(M+K)]+", "[M+K]+")
+	MSDB.DFT.PREC[[MSDB.TAG.NEG]] <- c("[(M-H)]-", "[M-H]-", "[(M+Cl)]-", "[M+Cl]-")
+	MSDB.DFT.INPUT.FIELDS <- list( mz = 'mz', rt = 'rt')
+	MSDB.DFT.OUTPUT.FIELDS <- list( mz = 'mz', rt = 'rt', col = 'col', colrt = 'colrt', molid = 'id', attr = 'attribution', comp = 'composition', int = 'intensity', rel = 'relative', mzexp = 'mzexp', mztheo = 'mztheo', msmatching = 'msmatching', molnames = 'molnames', molcomp = 'molcomp', molmass = 'molmass', inchi = 'inchi', inchikey = 'inchikey', pubchem = 'pubchem', chebi = 'chebi', hmdb = 'hmdb', kegg = 'kegg')
+	MSDB.DFT.OUTPUT.MULTIVAL.FIELD.SEP <- MSDB.MULTIVAL.FIELD.SEP
+	MSDB.DFT.MATCH.FIELDS <- list( molids = 'molid', molnames = 'molnames')
+	MSDB.DFT.MATCH.SEP <- ','
+	MSDB.DFT.MODES <- list( pos = 'POS', neg = 'NEG')
+
+	#########################
+	# GET DEFAULT DB FIELDS #
+	#########################
+
+	msdb.get.dft.db.fields <- function () {
+
+		dft.fields <- list()
+
+		dft.fields[[MSDB.TAG.MZ]] <- 'mz'
+		dft.fields[[MSDB.TAG.RT]] <- 'rt'
+		dft.fields[[MSDB.TAG.MOLID]] <- 'molid'
+		dft.fields[[MSDB.TAG.COL]] <- 'col'
+		dft.fields[[MSDB.TAG.MODE]] <- 'mode'
+		dft.fields[[MSDB.TAG.ATTR]] <- 'attribution'
+		dft.fields[[MSDB.TAG.COMP]] <- 'composition'
+		dft.fields[[MSDB.TAG.MOLNAMES]] <- 'molnames'
+		dft.fields[[MSDB.TAG.MOLCOMP]] <- 'molcomp'
+		dft.fields[[MSDB.TAG.MOLMASS]] <- 'molmass'
+		dft.fields[[MSDB.TAG.INCHI]] <- 'inchi'
+		dft.fields[[MSDB.TAG.INCHIKEY]] <- 'inchikey'
+		dft.fields[[MSDB.TAG.PUBCHEM]] <- 'pubchem'
+		dft.fields[[MSDB.TAG.CHEBI]] <- 'chebi'
+		dft.fields[[MSDB.TAG.HMDB]] <- 'hmdb'
+		dft.fields[[MSDB.TAG.KEGG]] <- 'kegg'
+
+		return(dft.fields)
+	}
+
+	##################
+	# MAKE DB FIELDS #
+	##################
+
+	msdb.make.db.fields <- function(fields) {
+
+		# Merge with default fields
+		dft.fields <- msdb.get.dft.db.fields()
+		absent <- ! names(dft.fields) %in% names(fields)
+		if (length(absent) > 0)
+			fields <- c(fields, dft.fields[absent])
+
+		return(fields)
+	}
+
+	#########################
+	# MAKE INPUT DATA FRAME #
+	#########################
+
+	msdb.make.input.df <- function(mz, rt = NULL) {
+
+		x <- data.frame()
+
+		# Set mz
+		if (length(mz) > 1)
+			x[seq(mz), MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.MZ]]] <- mz
+		else if (length(mz) == 1)
+			x[1, MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.MZ]]] <- mz
+		else
+			x[, MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.MZ]]] <- numeric()
+
+		# Set rt
+		if ( ! is.null(rt)) {
+			if (length(rt) > 1)
+				x[seq(rt), MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.RT]]] <- rt
+			else if (length(rt) == 1)
+				x[1, MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.RT]]] <- rt
+			else
+				x[, MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.RT]]] <- numeric()
+		}
+
+		return(x)
+	}
+
+	############################
+	# PARSE COLUMN DESCRIPTION #
+	############################
+	
+	.parse_chrom_col_desc <- function(desc) {
+	
+		# Clean string
+		s <- desc
+		s <- gsub('\\.+', ' ', s, perl = TRUE) # Replace '.' characters by spaces
+		s <- gsub('[*-]', ' ', s, perl = TRUE) # Replace dashes and asterisks by spaces
+		s <- gsub('[)(]', '', s, perl = TRUE) # Remove paranthesis
+		s <- trim(s)
+		s <- tolower(s) # put in lowercase
+		
+		# Match      2                         3 4                   5 6         7 8                                           9 10        1112         13
+		pattern <- "^(uplc|hsf5|hplc|zicphilic)( (c8|c18|150 5 2 1))?( (\\d+)mn)?( (orbitrap|exactive|qtof|shimadzu exactive))?( (\\d+)mn)?( (bis|ter))?( 1)?$"
+		g <- str_match(s, pattern)
+		if (is.na(g[1, 1]))
+			stop(paste0("Impossible to parse column description \"", desc, "\"."))
+
+		type <- g[1, 2]
+		stationary_phase <- if (nchar(g[1, 4]) > 0) g[1, 4] else NA_character_
+		msdevice <- if (nchar(g[1, 8]) > 0) g[1, 8] else NA_character_
+		time <- if (nchar(g[1, 6]) > 0) as.integer(g[1, 6]) else if (nchar(g[1, 10]) > 0) as.integer(g[1, 10]) else NA_integer_
+		
+		# Correct values
+		if ( ! is.na(stationary_phase) && stationary_phase == '150 5 2 1') stationary_phase <- '150*5*2.1'
+		if ( ! is.na(msdevice)) msdevice <- gsub(' ', '', msdevice) # remove spaces
+
+		return(list( type = type, stationary_phase = stationary_phase, time = time, msdevice = msdevice))
+
+	}
+	
+	#########################
+	# NORMALIZE COLUMN NAME #
+	#########################
+
+	.normalize_column_name <- function(desc) {
+	
+		lst <- .parse_chrom_col_desc(desc)
+	
+		v <- c(lst$type)
+		if ( ! is.na(lst$stationary_phase))
+			v <- c(v, lst$stationary_phase)
+		if ( ! is.na(lst$time))
+			v <- c(v, paste0(lst$time, "min"))
+		if ( ! is.na(lst$msdevice))
+			v <- c(v, lst$msdevice)
+	
+		return(paste(v, collapse = '-'))
+	}
+
+} # end of load safe guard

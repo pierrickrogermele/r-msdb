@@ -1,0 +1,145 @@
+#!/usr/bin/env Rscript
+# vi: ft=R
+library(methods)
+library(RUnit)
+library(getopt)
+args <- commandArgs(trailingOnly = FALSE)
+script.path <- sub("--file=", "", args[grep("--file=", args)])
+source(file.path(dirname(script.path), '..', 'MsPeakForestDb.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', 'MsFileDb.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', 'MsXlsDb.R'), chdir = TRUE)
+
+#############
+# READ ARGS #
+#############
+
+read.args <- function() {
+  
+  # program name
+  prog <- sub('^.*/([^/]+)$', '\\1', commandArgs()[4], perl = TRUE)
+  
+  # options
+  spec = matrix(c(
+    'all',          'a', 0, 'logical',      'Run all tests. Disabled by default.',
+    'help',         'h', 0, 'logical',      'Print this help.',
+    'filedb',       'f', 0, 'logical',      'Run tests on single file database. Disabled by default.',
+    'peakforest',   'p', 0, 'logical',      'Run tests on PeakForest database. Disabled by default.',
+    'name',         'n', 1, 'character',    'Run only test of the specified name. Unset by default.',
+    'quick',        'q', 0, 'logical',      'Do not run long tests. Disabled by default.',
+    'xlsdb',        'x', 0, 'logical',      'Run tests on XLS database. Disabled by default.',
+    'zap',          'z', 0, 'logical',      'Just run test on the first db and stop.'
+  ), byrow = TRUE, ncol = 5)
+   
+  opt <- getopt(spec)
+  opt$all = if (is.null(opt$all)) FALSE else TRUE
+  opt$filedb = if (is.null(opt$filedb)) FALSE else TRUE
+  opt$peakforest = if (is.null(opt$peakforest)) FALSE else TRUE
+  opt$quick = if (is.null(opt$quick)) FALSE else TRUE
+  opt$xlsdb = if (is.null(opt$xlsdb)) FALSE else TRUE
+  opt$zap = if (is.null(opt$zap)) FALSE else TRUE
+
+  # help
+  if ( ! is.null(opt$help)) {
+    cat(getopt(spec, usage = TRUE, command = prog))
+    q(status = 1)
+  }
+
+  return(opt)
+}
+
+##################
+# CALL SEARCH MZ #
+##################
+
+.g.conn.flag <- NULL;
+
+set.conn.flag <- function(type) {
+
+	.g.conn.flag <<- switch(type,
+		file = paste('-d file --url', file.path(dirname(script.path), 'filedb.tsv')),
+		file.cust.modes = paste('-d file --url', file.path(dirname(script.path), 'filedb-custmodes.tsv'), '--db-ms-modes', 'pos=+,neg=-'),
+		file.cust.cols = paste('-d file --url', file.path(dirname(script.path), 'filedb-custcols.tsv'), '--db-fields', 'mz=MASS,rt=RETTime,col=column'),
+		xls = paste('-d xls --url', 'xlsdb'),
+		fourtabsql = '-d 4tabsql', # TODO
+		NULL)
+}
+
+##################
+# CALL SEARCH MZ #
+##################
+
+call.search.mz <- function(opt, silent = FALSE) {
+
+	if (is.null(.g.conn.flag))
+		stop("No connexion flags provided for search-mz.")
+
+	call <- paste(file.path(dirname(script.path), '..', 'search-mz'), .g.conn.flag, paste(c(opt, '--debug'), collapse = ' '))
+	if (silent)
+		call <- paste(call, ">/dev/null", "2>/dev/null")
+
+	retcode <- system(call)
+
+	if (retcode != 0)
+		stop("Error when running search-mz.")
+}
+
+###############
+# DB INSTANCE #
+###############
+
+.g.db <- NULL;
+
+get.db <- function() {
+
+	if (is.null(.g.db))
+		stop("No database provided.")
+
+	return(.g.db)
+}
+
+set.db <- function(type) {
+
+	.g.db <<- switch(type,
+		peakforest.alpha = MsPeakForestDb$new(url = 'https://peakforest.clermont.inra.fr/rest-alpha/'),
+		file = MsFileDb$new(file = file.path(dirname(script.path), 'filedb.tsv')),
+		file.cust.modes = { db <- MsFileDb$new(file = file.path(dirname(script.path), 'filedb-custmodes.tsv')) ; db$setMsModes(c(pos = '+', neg = '-')) ; db },
+		file.cust.cols = { db <- MsFileDb$new(file = file.path(dirname(script.path), 'filedb-custcols.tsv')) ; db$setDbFields(msdb.make.db.fields(c(mz = 'MASS', rt = 'RETTime', col = 'column'))) ; db },
+		xls = MsXlsDb$new(db_dir = file.path(dirname(script.path), 'xlsdb')),
+		NULL)
+}
+
+########
+# MAIN #
+########
+
+options(error = function() { traceback(2) ; q(status = 1) }, warn = 2 )
+
+opt <- read.args()
+
+# Set db types to test
+dbtypes <- character()
+if (opt$filedb || opt$all)
+	dbtypes <- c(dbtypes, 'file', 'file.cust.modes', 'file.cust.cols')
+if (opt$peakforest || opt$all)
+	dbtypes <- c(dbtypes, 'peakforest.alpha')
+if (opt$xlsdb || opt$all)
+	dbtypes <- c(dbtypes, 'xls')
+if (opt$zap && length(dbtypes) > 0)
+	dbtypes <- dbtypes[1]
+
+# Define set of functions
+test.fcts = '^(.+\\.)?test\\..+'
+if (opt$quick || opt$all)
+	test.fcts = '^test\\..+'
+if ( ! is.null(opt$name))
+	test.fcts = paste0('^', opt$name, '$')
+
+# Loop on al db types
+for (type in dbtypes) {
+	cat("****************************************************************\n")
+	cat("RUNNING TESTS FOR DB TYPE \"", type, "\".\n", sep = '')
+	set.conn.flag(type)
+	set.db(type)
+	test.suite <- defineTestSuite('msdb', dirname(script.path), testFileRegexp = '^test-.+\\.R$', testFuncRegexp = test.fcts)
+	runTestSuite(test.suite)
+}

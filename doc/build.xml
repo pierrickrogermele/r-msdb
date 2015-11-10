@@ -1,0 +1,65 @@
+<project name="rmsdb.doc" default="all">
+
+	<include file="../../tool-pandoc/build.xml" as="pandoc"/>
+	<include file="../../tool-plantuml/build.xml" as="plantuml"/>
+	<include file="../../ant-lib/contrib.xml" as="ant.contrib"/>
+
+	<!--~~~~
+	~  ALL ~
+	~~~~~-->
+
+	<target name="all" depends="pres,design"/>
+
+	<!--~~~~~~~
+	~  DESIGN ~
+	~~~~~~~~-->
+
+	<target name="design" depends="pictures">
+		<pandoc toc="true" numbering="true" input="rmsdb-design.md rmsdb-design.yaml" output="rmsdb-design.pdf"/>
+	</target>
+
+	<!--~~~~~
+	~  PRES ~
+	~~~~~~-->
+
+	<target name="pres" depends="pictures">
+		<!-- FIXME Error when building Slidy presentation:
+				pandoc: Could not fetch http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css
+				[exec] NoResponseDataReceived
+		<pandoc format="slidy" mathml="true" standalone="true" selfcontained="true" input="rmsdb-pres.md" output="rmsdb-pres.html"/>
+		-->
+		<pandoc format="beamer" mathml="true" standalone="true" selfcontained="true" input="rmsdb-pres.md" output="rmsdb-pres.pdf"/>
+	</target>
+
+	<!--~~~~~~~~~
+	~  PICTURES ~
+	~~~~~~~~~~-->
+
+	<target name="pictures">
+
+		<!-- plantuml -->
+		<fileset dir="diagrams" id="pu.files">
+			<include name="*.pu"/>
+		</fileset>
+		<pathconvert pathsep=" " property="pu.files" refid="pu.files"/>
+		<plantuml type="png" input="${pu.files}"/>
+	</target>
+
+	<!--~~~~~
+	~ CLEAN ~
+	~~~~~~-->
+
+	<target name="clean">
+		<delete dir="." includes="*.pdf"/>
+		<delete dir="." includes="*.html"/>
+		<delete dir="diagrams" includes="*.eps"/>
+		<delete dir="diagrams" includes="*.png"/>
+	</target>
+
+	<!--~~~~
+	~ TEST ~
+	~~~~~-->
+
+	<target name="test"/>
+
+</project>

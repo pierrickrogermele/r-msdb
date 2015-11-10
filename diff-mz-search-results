@@ -1,0 +1,95 @@
+#!/usr/bin/env Rscript
+# vi: ft=R
+args <- commandArgs(trailingOnly = F)
+script_path <- sub("--file=","",args[grep("--file=",args)])
+library(getopt)
+
+
+#################
+# CMD LINE ARGS #
+#################
+
+read_args <- function() {
+
+	# program name
+	prog <- sub('^.*/([^/]+)$', '\\1', commandArgs()[4], perl = TRUE)
+
+	# options
+	spec = matrix(c(
+		'help',             'h',            0,  'logical',      'Print this help.',
+		'first-file',       'f',            1,  'character',    'Set first file.',
+		'second-file',      's',            1,  'character',    'Set second file.',
+		'output-file',      'o',            1,  'character',    'Set output file.'
+		), byrow = TRUE, ncol = 5)
+
+	opt <- getopt(spec)
+
+	# help
+	if ( ! is.null(opt$help)
+		) {
+		cat(getopt(spec, usage = TRUE, command = prog))
+		q(status = 1)
+	}
+
+	return(opt)
+}
+
+########
+# MAIN #
+########
+
+options(error = function() traceback(2))
+
+# Read command line arguments
+opt <- read_args()
+
+# Load input files
+x1 <- read.table(file = opt[['first-file']], header = TRUE, sep = "\t")
+x2 <- read.table(file = opt[['second-file']], header = TRUE, sep = "\t")
+
+# Put column names in lowercase 
+colnames(x1) <- tolower(colnames(x1))
+
+# Sort x1 and x2 in (mz, id) increasing values
+x1 <- rbind(x1)[order(x1['mz'], x1['id']),]
+x2 <- rbind(x2)[order(x2['mz'], x2['id']),]
+
+# Loop on both lines of x1 and x2
+i1 <- 1
+i2 <- 1
+n1 <- nrow(x1)
+n2 <- nrow(x2)
+y <- data.frame(mz = double(), id = integer(), diff = character(), stringsAsFactors = FALSE)
+while (i1 <= n1 && i2 <= n2) {
+
+	# Get mz values
+	mz1 <- x1[i1, 'mz']
+	mz2 <- x2[i2, 'mz']
+	id1 <- x1[i1, 'id']
+	id2 <- x2[i2, 'id']
+
+	# Same line (m/z values and IDs are identical)
+	if (isTRUE(all.equal(mz1, mz2)) && identical(id1, id2)) {
+		i1 <- i1 + 1
+		i2 <- i2 + 1
+	}
+
+	# Line is missing in second file
+	else if ( i2 > n2
+			  || (isTRUE(all.equal(mz1, mz2)) && ! is.na(id1) && (is.na(id2) || id1 < id2))
+			  || ( ! isTRUE(all.equal(mz1, mz2)) && mz1 < mz2) ) {
+#cat(opt[['second-file']], '(', i2, ')', ': missing line mz = ', mz1, ' id = ', id1, ".\n", sep = '', file = stderr())
+		y[nrow(y) + 1,] <- list(mz = mz1, id = id1, diff = '-')
+		i1 <- i1 + 1
+	}
+
+	# Line is missing in first file
+	else {
+#		cat(opt[['second-file']], '(', i2, ')', ': additional line mz = ', mz2, ' id = ', id2, ".\n", sep = '', file = stderr())
+		y[nrow(y) + 1,] <- list(mz = mz2, id = id2, diff = '+')
+		i2 <- i2 + 1
+	}
+}
+
+# Write differences/changes in output file
+write.table(y, file = opt[['output-file']], sep = "\t", row.names = FALSE, )
