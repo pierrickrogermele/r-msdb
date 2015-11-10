@@ -7,3 +7,5 @@ cache
 !filedb.tsv
 filedb-*.tsv
 *.html
+mz-input*.tsv
+mzrt-input-*.tsv
