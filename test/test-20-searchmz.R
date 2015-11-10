@@ -20,7 +20,7 @@ test.match.mzrt.using.input.file.without.rt <- function() {
 test.empty.files <- function() {	
 	# Empty files
 	call.search.mz(c('-m pos', '-i mzrt-input-empty.tsv', '-o mz-output.tsv'))
-	call.search.mz(c('-m pos', '-i mzrt-input-empty-noheader.tsv', '-o mz-output.tsv'))
+	call.search.mz(c('-m pos', '-i empty.tsv', '-o mz-output.tsv'))
 }
 
 test.cust.input.file <- function() {
