@@ -102,7 +102,7 @@ set.db <- function(type) {
 	.g.db <<- switch(type,
 		peakforest.alpha = MsPeakForestDb$new(url = 'https://peakforest.clermont.inra.fr/rest-alpha/'),
 		file = MsFileDb$new(file = file.path(dirname(script.path), 'filedb.tsv')),
-		file.cust.modes = { db <- MsFileDb$new(file = file.path(dirname(script.path), 'filedb-custmodes.tsv')) ; db$setMsModes(c(pos = '+', neg = '-')) ; db },
+		file.cust.modes = { db <- MsFileDb$new(file = file.path(dirname(script.path), 'filedb-custmodes.tsv')) ; db$setDbMsModes(c(pos = '+', neg = '-')) ; db },
 		file.cust.cols = { db <- MsFileDb$new(file = file.path(dirname(script.path), 'filedb-custcols.tsv')) ; db$setDbFields(msdb.make.db.fields(c(mz = 'MASS', rt = 'RETTime', col = 'column'))) ; db },
 		xls = MsXlsDb$new(db_dir = file.path(dirname(script.path), 'xlsdb'), cache_dir = file.path(dirname(script.path), 'xlsdb', 'cache')),
 		NULL)

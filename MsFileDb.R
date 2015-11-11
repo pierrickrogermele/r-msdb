@@ -31,6 +31,10 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 	# SET DB FIELDS #
 	#################
 	
+	MsFileDb$methods( areDbFieldsSettable = function() {
+		return(TRUE)
+	})
+	
 	MsFileDb$methods( setDbFields = function(fields) {
 		.fields <<- as.list(fields)
 	})
@@ -61,7 +65,11 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 	# SET MS MODES #
 	################
 	
-	MsFileDb$methods( setMsModes = function(modes) {
+	MsFileDb$methods( areDbMsModesSettable = function() {
+		return(TRUE)
+	})
+	
+	MsFileDb$methods( setDbMsModes = function(modes) {
 		.modes <<- as.list(modes)
 	})
 	

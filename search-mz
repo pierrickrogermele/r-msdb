@@ -385,8 +385,10 @@ read_args <- function() {
 		db$setOutputFields(opt[['output-col-names']])
 		db$setMolidsSep(opt[['molids-sep']])
 		db$setPrecursors(precursors)
-		db$setDbFields(opt[['db-fields']])
-		db$setMsModes(opt[['db-ms-modes']])
+		if (db$areDbFieldsSettable())
+			db$setDbFields(opt[['db-fields']])
+		if (db$areDbMsModesSettable())
+			db$setDbMsModes(opt[['db-ms-modes']])
 		db$addObservers(MsDbLogger$new())
 
 		return(db)

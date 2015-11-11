@@ -140,6 +140,10 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# SET DB FIELDS #
 	#################
 	
+	MsDb$methods( areDbFieldsSettable = function() {
+		return(FALSE)
+	})
+	
 	MsDb$methods( setDbFields = function(fields) {
 		stop("Method setDbFields() not implemented in concrete class.")
 	})
@@ -148,8 +152,12 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# SET MS MODES #
 	################
 	
-	MsDb$methods( setMsModes = function(modes) {
-		stop("Method setMsModes() not implemented in concrete class.")
+	MsDb$methods( areDbMsModesSettable = function() {
+		return(FALSE)
+	})
+	
+	MsDb$methods( setDbMsModes = function(modes) {
+		stop("Method setDbMsModes() not implemented in concrete class.")
 	})
 	
 	####################
