@@ -64,7 +64,15 @@ print.help <- function(spec, status = 0) {
 
 set.dft.arg.val <-function(opt) {
 
-	opt <- .set.db.conn.dft(opt)
+	
+	# Set default values
+	if ( opt$database == MSDB.XLS && ! is.null(opt$url) && is.null(opt[['cache-dir']]))
+		opt[['cache-dir']] <- file.path(opt$url, 'cache')
+	if (is.null(opt[['db-fields']]))
+		opt[['db-fields']] <- MSDB.DFT.FIELDS
+	if (is.null(opt[['db-ms-modes']]))
+		opt[['db-ms-modes']] <- MSDB.DFT.MS.MODES
+
 	if ( ! is.null(opt$rtcol) && opt$rtcol == '')
 		opt$rtcol <- NULL
 	if (is.null(opt[['precursor-rt-tol']]))
@@ -83,6 +91,50 @@ set.dft.arg.val <-function(opt) {
 		opt[['output-col-names']] <- MSDB.DFT.OUTPUT.COL.NAMES
 	if (is.null(opt[['molids-sep']]))
 		opt[['molids-sep']] <- MSDB.DFT.MATCH.SEP
+
+	return(opt)
+}
+
+#########################
+# PARSE ARGUMENT VALUES #
+#########################
+
+parse.arg.val <- function(opt) {
+
+	# Parse input column names
+	if ( ! is.null(opt[['db-fields']])) {
+		cust <- split.kv.list(opt[['db-fields']])
+		opt[['db-fields']] <- split.kv.list(MSDB.DFT.FIELDS)
+		opt[['db-fields']][names(cust)] <- cust
+	}
+
+	# Parse MS modes
+	if ( ! is.null(opt[['db-ms-modes']]))
+		opt[['db-ms-modes']] <- split.kv.list(opt[['db-ms-modes']])
+
+	# Parse retention time columns
+	if ( ! is.null(opt$rtcol))
+		opt$rtcol <- strsplit(opt$rtcol, ',')[[1]]
+
+	# Parse input column names
+	if ( ! is.null(opt[['input-col-names']])) {
+		custcols <- split.kv.list(opt[['input-col-names']])
+		dftcols <- split.kv.list(MSDB.DFT.INPUT.COL.NAMES)
+		opt[['input-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
+	}
+
+	# Parse output column names
+	if ( ! is.null(opt[['output-col-names']])) {
+		custcols <- split.kv.list(opt[['output-col-names']])
+		dftcols <- split.kv.list(MSDB.DFT.OUTPUT.COL.NAMES)
+		opt[['output-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
+	}
+
+	# Parse lists of precursors
+	if ( ! is.null(opt[['pos-prec']]))
+		opt[['pos-prec']] <- split(opt[['pos-prec']], unlist = TRUE)
+	if ( ! is.null(opt[['neg-prec']]))
+		opt[['neg-prec']] <- split(opt[['neg-prec']], unlist = TRUE)
 
 	return(opt)
 }
@@ -139,7 +191,6 @@ read_args <- function() {
 		'print-neg-prec',           NA_character_,  0,  'logical',  'Print default value of --neg-prec.',
 		'debug',            NA_character_,  0,  'logical',      'Set debug mode.'
 		), byrow = TRUE, ncol = 5)
-# TODO split table in several blocks, bind it and then sort it.
 
 	opt <- getopt(spec)
 
@@ -169,32 +220,8 @@ read_args <- function() {
 		q(status = 0)
 	}
 
-	# Set default values
-	opt <- set.dft.arg.val(opt)
-
-	# Parse retention time columns
-	if ( ! is.null(opt$rtcol))
-		opt$rtcol <- strsplit(opt$rtcol, ',')[[1]]
-
-	# Parse input column names
-	if ( ! is.null(opt[['input-col-names']])) {
-		custcols <- split.kv.list(opt[['input-col-names']])
-		dftcols <- split.kv.list(MSDB.DFT.INPUT.COL.NAMES)
-		opt[['input-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
-	}
-
-	# Parse output column names
-	if ( ! is.null(opt[['output-col-names']])) {
-		custcols <- split.kv.list(opt[['output-col-names']])
-		dftcols <- split.kv.list(MSDB.DFT.OUTPUT.COL.NAMES)
-		opt[['output-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
-	}
-
-	# Parse lists of precursors
-	if ( ! is.null(opt[['pos-prec']]))
-		opt[['pos-prec']] <- split(opt[['pos-prec']], unlist = TRUE)
-	if ( ! is.null(opt[['neg-prec']]))
-		opt[['neg-prec']] <- split(opt[['neg-prec']], unlist = TRUE)
+	opt <- set.dft.arg.val(opt) # Set default values
+	opt <- parse.arg.val(opt) # Parse list values
 
 	# Check values
 	error <- .check.db.conn.opts(opt)
@@ -227,34 +254,6 @@ read_args <- function() {
 
 	return(opt)
 }
-	
-	##################################################
-	# SET DATABASE CONNECTION OPTIONS DEFAULT VALUES #
-	#################################################
-	
-	.set.db.conn.dft <- function(opt) {
-	
-		# Set default values
-		if ( opt$database == MSDB.XLS && ! is.null(opt$url) && is.null(opt[['cache-dir']]))
-			opt[['cache-dir']] <- file.path(opt$url, 'cache')
-		if (is.null(opt[['db-fields']]))
-		    opt[['db-fields']] <- MSDB.DFT.FIELDS
-		if (is.null(opt[['db-ms-modes']]))
-		    opt[['db-ms-modes']] <- MSDB.DFT.MS.MODES
-	
-		# Parse input column names
-		if ( ! is.null(opt[['db-fields']])) {
-			cust <- split.kv.list(opt[['db-fields']])
-			opt[['db-fields']] <- split.kv.list(MSDB.DFT.FIELDS)
-			opt[['db-fields']][names(cust)] <- cust
-		}
-	
-		# Parse MS modes
-		if ( ! is.null(opt[['db-ms-modes']]))
-			opt[['db-ms-modes']] <- split.kv.list(opt[['db-ms-modes']])
-	
-		return(opt)
-	}
 	
 	#####################################
 	# CHECK DATABASE CONNECTION OPTIONS #
