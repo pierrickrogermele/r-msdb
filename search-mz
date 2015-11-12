@@ -39,15 +39,17 @@ MSDB.VALS <- c(MSDB.XLS, MSDB.4TABSQL, MSDB.FILE, MSDB.PEAKFOREST)
 MSDB.MODE.VALS <- c(POS_MODE, NEG_MODE)
 
 # Default 
-MSDB.DFT.FIELDS <- concat.kv.list(msdb.get.dft.db.fields())
-MSDB.DFT.MS.MODES <- concat.kv.list(MSDB.DFT.MODES)
-MSDB.DFT.MZ.SHIFT <- 0 # in ppm
-MSDB.DFT.MZ.PREC <- 5 # in ppm
-MSDB.DFT.PREC.RT.MATCH <- 5
-MSDB.DFT.INPUT.COL.NAMES <- concat.kv.list(MSDB.DFT.INPUT.FIELDS)
-MSDB.DFT.OUTPUT.COL.NAMES <- concat.kv.list(MSDB.DFT.OUTPUT.FIELDS)
-MSDB.DFT.PREC.POS <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
-MSDB.DFT.PREC.NEG <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
+MSDB.DFT <- list()
+MSDB.DFT[['mzshift']] <- 0 # in ppm
+MSDB.DFT[['mzprec']] <- 5 # in ppm
+MSDB.DFT[['precursor-rt-tol']] <- 5
+MSDB.DFT[['molids-sep']] <- MSDB.DFT.MATCH.SEP
+MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())
+MSDB.DFT[['db-ms-modes']] <- concat.kv.list(MSDB.DFT.MODES)
+MSDB.DFT[['input-col-names']] <- concat.kv.list(MSDB.DFT.INPUT.FIELDS)
+MSDB.DFT[['output-col-names']] <- concat.kv.list(MSDB.DFT.OUTPUT.FIELDS)
+MSDB.DFT[['pos-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
+MSDB.DFT[['neg-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
 
 ##############
 # PRINT HELP #
@@ -64,33 +66,16 @@ print.help <- function(spec, status = 0) {
 
 set.dft.arg.val <-function(opt) {
 
-	
+	for (f in names(MSDB.DFT))
+		if (is.null(opt[[f]]))
+			opt[[f]] <- MSDB.DFT[[f]]
+
 	# Set default values
 	if ( opt$database == MSDB.XLS && ! is.null(opt$url) && is.null(opt[['cache-dir']]))
 		opt[['cache-dir']] <- file.path(opt$url, 'cache')
-	if (is.null(opt[['db-fields']]))
-		opt[['db-fields']] <- MSDB.DFT.FIELDS
-	if (is.null(opt[['db-ms-modes']]))
-		opt[['db-ms-modes']] <- MSDB.DFT.MS.MODES
 
 	if ( ! is.null(opt$rtcol) && opt$rtcol == '')
 		opt$rtcol <- NULL
-	if (is.null(opt[['precursor-rt-tol']]))
-		opt[['precursor-rt-tol']] <- MSDB.DFT.PREC.RT.MATCH
-	if (is.null(opt[['pos-prec']]))
-		opt[['pos-prec']] <- MSDB.DFT.PREC.POS
-	if (is.null(opt[['neg-prec']]))
-		opt[['neg-prec']] <- MSDB.DFT.PREC.NEG
-	if (is.null(opt$mzprec))
-		opt$mzprec <- MSDB.DFT.MZ.PREC
-	if (is.null(opt$mzshift))
-		opt$mzshift <- MSDB.DFT.MZ.SHIFT
-	if (is.null(opt[['input-col-names']]))
-		opt[['input-col-names']] <- MSDB.DFT.INPUT.COL.NAMES
-	if (is.null(opt[['output-col-names']]))
-		opt[['output-col-names']] <- MSDB.DFT.OUTPUT.COL.NAMES
-	if (is.null(opt[['molids-sep']]))
-		opt[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 
 	return(opt)
 }
@@ -104,7 +89,7 @@ parse.arg.val <- function(opt) {
 	# Parse input column names
 	if ( ! is.null(opt[['db-fields']])) {
 		cust <- split.kv.list(opt[['db-fields']])
-		opt[['db-fields']] <- split.kv.list(MSDB.DFT.FIELDS)
+		opt[['db-fields']] <- split.kv.list(MSDB.DFT[['db-fields']])
 		opt[['db-fields']][names(cust)] <- cust
 	}
 
@@ -119,14 +104,14 @@ parse.arg.val <- function(opt) {
 	# Parse input column names
 	if ( ! is.null(opt[['input-col-names']])) {
 		custcols <- split.kv.list(opt[['input-col-names']])
-		dftcols <- split.kv.list(MSDB.DFT.INPUT.COL.NAMES)
+		dftcols <- split.kv.list(MSDB.DFT[['input-col-names']])
 		opt[['input-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
 	}
 
 	# Parse output column names
 	if ( ! is.null(opt[['output-col-names']])) {
 		custcols <- split.kv.list(opt[['output-col-names']])
-		dftcols <- split.kv.list(MSDB.DFT.OUTPUT.COL.NAMES)
+		dftcols <- split.kv.list(MSDB.DFT[['output-col-names']])
 		opt[['output-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
 	}
 
@@ -139,18 +124,41 @@ parse.arg.val <- function(opt) {
 	return(opt)
 }
 
-#############
-# READ ARGS #
-#############
+#################################
+# PRINT DEFAULT ARGUMENT VALUES #
+#################################
 
-read_args <- function() {
+print.dft.arg.val <- function(opt) {
 
-	# options
-	spec = matrix(c(
+	print.flags <- MSDB.DFT
+	names(print.flags) <- vapply(names(print.flags), function(x) paste0('print-', x), FUN.VALUE = '')
+	for (f in names(print.flags))
+		if ( ! is.null(opt[[f]])) {
+			cat(print.flags[[f]])
+			q(status = 0)
+		}
+}
+
+make.getopt.spec.print.dft <- function() {
+
+	spec <- character()
+
+	for (f in names(MSDB.DFT))
+		spec <- c(spec, paste0('print-', f), NA_character_, 0, 'logical', paste0('Print default value of --', f))
+
+	return(spec)
+}
+
+##############################
+# MAKE GETOPT SPECIFICATIONS #
+##############################
+
+make.getopt.spec <- function() {
+	spec = c(
 		'help',             'h',            0,  'logical',      'Print this help.',
 		'mode',             'm',            1,  'character',    paste0('MS mode. Possible values are:', paste(MSDB.MODE.VALS, collapse = ", "), '.'),
-		'mzshift',          's',            1,  'numeric',      paste0('Shift on m/z, in ppm. Default is ', MSDB.DFT.MZ.SHIFT,'.'),
-		'mzprec',           'p',            1,  'numeric',      paste0('Tolerance on m/z, in ppm. Default is ', MSDB.DFT.MZ.PREC,'.'),
+		'mzshift',          's',            1,  'numeric',      paste0('Shift on m/z, in ppm. Default is ', MSDB.DFT$mzshift,'.'),
+		'mzprec',           'p',            1,  'numeric',      paste0('Tolerance on m/z, in ppm. Default is ', MSDB.DFT$mzprec,'.'),
 		'rttol',            'r',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rttolx',           'x',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rttoly',           'y',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
@@ -166,12 +174,12 @@ read_args <- function() {
 		'html-output-file', NA_character_,  1,  'character',    'Set file to use for the HTML output.',
 		'no-main-table-in-html-output',  NA_character_,  0,  'logical',      'Do not display main table in HTML output.',
 		'precursor-match',  NA_character_,  0,  'logical',      'Remove peaks whose molecule precursor peak has not been matched. Unset by default.',
-		'precursor-rt-tol', NA_character_,  1,  'numeric',      paste0('Precursor retention time tolerance. Only used when precursor-match is enabled. Default is ', MSDB.DFT.PREC.RT.MATCH, '.'),
-		'pos-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in positive mode. Default is "', MSDB.DFT.PREC.POS, '".'),
-		'neg-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in negative mode. Default is "', MSDB.DFT.PREC.NEG, '".'),
-		'input-col-names',  NA_character_,  1,  'character',    paste0('Set the input column names. Default is "', MSDB.DFT.INPUT.COL.NAMES, '".'),
-		'output-col-names', NA_character_,  1,  'character',    paste0('Set the output column names. Default is "', MSDB.DFT.OUTPUT.COL.NAMES, '".'),
-		'molids-sep',       NA_character_,  1,  'character',    paste0('Set character separator used to when concatenating molecule IDs in output. Default is "', MSDB.DFT.MATCH.SEP , '".'),
+		'precursor-rt-tol', NA_character_,  1,  'numeric',      paste0('Precursor retention time tolerance. Only used when precursor-match is enabled. Default is ', MSDB.DFT[['precursor-rt-tol']], '.'),
+		'pos-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in positive mode. Default is "', MSDB.DFT[['pos-prec']], '".'),
+		'neg-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in negative mode. Default is "', MSDB.DFT[['neg-prec']], '".'),
+		'input-col-names',  NA_character_,  1,  'character',    paste0('Set the input column names. Default is "', MSDB.DFT[['input-col-names']], '".'),
+		'output-col-names', NA_character_,  1,  'character',    paste0('Set the output column names. Default is "', MSDB.DFT[['output-col-names']], '".'),
+		'molids-sep',       NA_character_,  1,  'character',    paste0('Set character separator used to when concatenating molecule IDs in output. Default is "', MSDB.DFT[['molids-sep']] , '".'),
 		'first-val',        NA_character_,  0,  'logical',      'Keep only the first value in multi-value fields. Unset by default.',
 		'excel2011comp',            NA_character_,  0,  'logical',      'Excel 2011 compatiblity mode. Output ASCII text files instead of UTF-8 files, where greek letters are replaced with their latin names, plusminus sign is replaced with +- and apostrophe is replaced with \"prime\". All other non-ASCII characters are repladed with underscore.',
 		'database',         'd',            1,  'character',    paste0('Set database to use: "xls" for an Excel database, "file" for a single file database, "4tabsql" for a 4Tab SQL database, and "peakforest" for a connection to PeakForest database.'),
@@ -180,46 +188,34 @@ read_args <- function() {
 		'dbname',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
 		'user',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
 		'password',      NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
-		'db-fields',        NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the field names to be used in the single file database (option --db-file). Default is "', MSDB.DFT.FIELDS, '".'),
-		'db-ms-modes',      NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the MS modes to be used in the single file database (option --db-file). Default is "', MSDB.DFT.MS.MODES, '".'),
-		'print-db-fields',  NA_character_,  0,  'logical',      'Print default value of --db-fields',
-		'print-db-ms-modes',NA_character_,  0,  'logical',      'Print default value of --db-ms-modes',
-		'print-input-col-names',    NA_character_,  0,  'logical',  'Print default value of --input-col-names.',
-		'print-output-col-names',   NA_character_,  0,  'logical',  'Print default value of --output-col-names.',
-		'print-molids-sep',         NA_character_,  0,  'logical',  'Print default value of --molids-sep.',
-		'print-pos-prec',           NA_character_,  0,  'logical',  'Print default value of --pos-prec.',
-		'print-neg-prec',           NA_character_,  0,  'logical',  'Print default value of --neg-prec.',
+		'db-fields',        NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the field names to be used in the single file database (option --db-file). Default is "', MSDB.DFT[['db-fields']], '".'),
+		'db-ms-modes',      NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the MS modes to be used in the single file database (option --db-file). Default is "', MSDB.DFT[['db-ms-modes']], '".'),
 		'debug',            NA_character_,  0,  'logical',      'Set debug mode.'
-		), byrow = TRUE, ncol = 5)
+		)
 
+	spec <- c(spec, make.getopt.spec.print.dft())	
+
+	if ( ! is.null(spec))
+		spec <- matrix(spec, byrow = TRUE, ncol = 5)
+
+	return(spec)
+}
+
+#############
+# READ ARGS #
+#############
+
+read_args <- function() {
+
+	# options
+	spec <- make.getopt.spec()
 	opt <- getopt(spec)
 
 	# help
 	if ( ! is.null(opt$help))
 		print.help(spec)
 
-	# Print default values
-	if ( ! is.null(opt[['print-input-col-names']])) {
-		cat(MSDB.DFT.INPUT.COL.NAMES)
-		q(status = 0)
-	}
-	if ( ! is.null(opt[['print-output-col-names']])) {
-		cat(MSDB.DFT.OUTPUT.COL.NAMES)
-		q(status = 0)
-	}
-	if ( ! is.null(opt[['print-molids-sep']])) {
-		cat(MSDB.DFT.MATCH.SEP)
-		q(status = 0)
-	}
-	if ( ! is.null(opt[['print-pos-prec']])) {
-		cat(MSDB.DFT.PREC.POS)
-		q(status = 0)
-	}
-	if ( ! is.null(opt[['print-neg-prec']])) {
-		cat(MSDB.DFT.PREC.NEG)
-		q(status = 0)
-	}
-
+	print.dft.arg.val(opt) # Print default values
 	opt <- set.dft.arg.val(opt) # Set default values
 	opt <- parse.arg.val(opt) # Parse list values
 
@@ -263,11 +259,11 @@ read_args <- function() {
 
 		# Print default values
 		if ( ! is.null(opt[['print-db-fields']])) {
-			cat(MSDB.DFT.FIELDS)
+			cat(MSDB.DFT[['db-fields']])
 			q(status = 0)
 		}
 		if ( ! is.null(opt[['print-db-ms-modes']])) {
-			cat(MSDB.DFT.MS.MODES)
+			cat(MSDB.DFT[['db-ms-modes']])
 			q(status = 0)
 		}
 	
