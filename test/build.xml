@@ -4,11 +4,14 @@
 	<property name="mzrt.input" value="mzrt-input.tsv"/>
 
 	<!-- ALL -->
-	<target name="all" depends="filedbs,input.files">
+	<target name="all" depends="test.data">
 		<exec executable="./test-msdb" failonerror="true">
 			<arg value="-f"/>
 		</exec>
 	</target>
+
+	<!-- TEST DATA -->
+	<target name="test.data" depends="filedbs,input.files"/>
 	
 	<!-- FILEDBS -->
 	<target name="filedbs" depends="filedb.custcols,filedb.custmodes"/>
