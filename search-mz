@@ -23,6 +23,8 @@ source(file.path(dirname(script_path), '../r-biodb/PubchemConn.R'), chdir = TRUE
 # CONSTANTS #
 #############
 
+PROG <- sub('^.*/([^/]+)$', '\\1', commandArgs()[4], perl = TRUE)
+
 POS_MODE <- 'pos'
 NEG_MODE <- 'neg'
 
@@ -39,8 +41,13 @@ MSDB.MODE.VALS <- c(POS_MODE, NEG_MODE)
 # Default 
 MSDB.DFT.FIELDS <- concat.kv.list(msdb.get.dft.db.fields())
 MSDB.DFT.MS.MODES <- concat.kv.list(MSDB.DFT.MODES)
-
-PROG <- sub('^.*/([^/]+)$', '\\1', commandArgs()[4], perl = TRUE)
+MSDB.DFT.MZ.SHIFT <- 0 # in ppm
+MSDB.DFT.MZ.PREC <- 5 # in ppm
+MSDB.DFT.PREC.RT.MATCH <- 5
+MSDB.DFT.INPUT.COL.NAMES <- concat.kv.list(MSDB.DFT.INPUT.FIELDS)
+MSDB.DFT.OUTPUT.COL.NAMES <- concat.kv.list(MSDB.DFT.OUTPUT.FIELDS)
+MSDB.DFT.PREC.POS <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
+MSDB.DFT.PREC.NEG <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
 
 ##############
 # PRINT HELP #
@@ -51,27 +58,47 @@ print.help <- function(spec, status = 0) {
 	q(status = status)
 }
 
+###############################
+# SET DEFAULT ARGUMENT VALUES #
+###############################
+
+set.dft.arg.val <-function(opt) {
+
+	opt <- .set.db.conn.dft(opt)
+	if ( ! is.null(opt$rtcol) && opt$rtcol == '')
+		opt$rtcol <- NULL
+	if (is.null(opt[['precursor-rt-tol']]))
+		opt[['precursor-rt-tol']] <- MSDB.DFT.PREC.RT.MATCH
+	if (is.null(opt[['pos-prec']]))
+		opt[['pos-prec']] <- MSDB.DFT.PREC.POS
+	if (is.null(opt[['neg-prec']]))
+		opt[['neg-prec']] <- MSDB.DFT.PREC.NEG
+	if (is.null(opt$mzprec))
+		opt$mzprec <- MSDB.DFT.MZ.PREC
+	if (is.null(opt$mzshift))
+		opt$mzshift <- MSDB.DFT.MZ.SHIFT
+	if (is.null(opt[['input-col-names']]))
+		opt[['input-col-names']] <- MSDB.DFT.INPUT.COL.NAMES
+	if (is.null(opt[['output-col-names']]))
+		opt[['output-col-names']] <- MSDB.DFT.OUTPUT.COL.NAMES
+	if (is.null(opt[['molids-sep']]))
+		opt[['molids-sep']] <- MSDB.DFT.MATCH.SEP
+
+	return(opt)
+}
+
 #############
 # READ ARGS #
 #############
 
 read_args <- function() {
 
-	# Default values
-	dft_mzshift <- 0 # in ppm
-	dft_mzprec <- 5 # in ppm
-	dft.precusor.rt.match <- 5
-	dft.input.col.names <- concat.kv.list(MSDB.DFT.INPUT.FIELDS)
-	dft.output.col.names <- concat.kv.list(MSDB.DFT.OUTPUT.FIELDS)
-	dft.precursors.pos <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
-	dft.precursors.neg <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
-
 	# options
 	spec = matrix(c(
 		'help',             'h',            0,  'logical',      'Print this help.',
 		'mode',             'm',            1,  'character',    paste0('MS mode. Possible values are:', paste(MSDB.MODE.VALS, collapse = ", "), '.'),
-		'mzshift',          's',            1,  'numeric',      paste0('Shift on m/z, in ppm. Default is ', dft_mzshift,'.'),
-		'mzprec',           'p',            1,  'numeric',      paste0('Tolerance on m/z, in ppm. Default is ', dft_mzprec,'.'),
+		'mzshift',          's',            1,  'numeric',      paste0('Shift on m/z, in ppm. Default is ', MSDB.DFT.MZ.SHIFT,'.'),
+		'mzprec',           'p',            1,  'numeric',      paste0('Tolerance on m/z, in ppm. Default is ', MSDB.DFT.MZ.PREC,'.'),
 		'rttol',            'r',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rttolx',           'x',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rttoly',           'y',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
@@ -87,11 +114,11 @@ read_args <- function() {
 		'html-output-file', NA_character_,  1,  'character',    'Set file to use for the HTML output.',
 		'no-main-table-in-html-output',  NA_character_,  0,  'logical',      'Do not display main table in HTML output.',
 		'precursor-match',  NA_character_,  0,  'logical',      'Remove peaks whose molecule precursor peak has not been matched. Unset by default.',
-		'precursor-rt-tol', NA_character_,  1,  'numeric',      paste0('Precursor retention time tolerance. Only used when precursor-match is enabled. Default is ', dft.precusor.rt.match, '.'),
-		'pos-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in positive mode. Default is "', dft.precursors.pos, '".'),
-		'neg-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in negative mode. Default is "', dft.precursors.neg, '".'),
-		'input-col-names',  NA_character_,  1,  'character',    paste0('Set the input column names. Default is "', dft.input.col.names, '".'),
-		'output-col-names', NA_character_,  1,  'character',    paste0('Set the output column names. Default is "', dft.output.col.names, '".'),
+		'precursor-rt-tol', NA_character_,  1,  'numeric',      paste0('Precursor retention time tolerance. Only used when precursor-match is enabled. Default is ', MSDB.DFT.PREC.RT.MATCH, '.'),
+		'pos-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in positive mode. Default is "', MSDB.DFT.PREC.POS, '".'),
+		'neg-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in negative mode. Default is "', MSDB.DFT.PREC.NEG, '".'),
+		'input-col-names',  NA_character_,  1,  'character',    paste0('Set the input column names. Default is "', MSDB.DFT.INPUT.COL.NAMES, '".'),
+		'output-col-names', NA_character_,  1,  'character',    paste0('Set the output column names. Default is "', MSDB.DFT.OUTPUT.COL.NAMES, '".'),
 		'molids-sep',       NA_character_,  1,  'character',    paste0('Set character separator used to when concatenating molecule IDs in output. Default is "', MSDB.DFT.MATCH.SEP , '".'),
 		'first-val',        NA_character_,  0,  'logical',      'Keep only the first value in multi-value fields. Unset by default.',
 		'excel2011comp',            NA_character_,  0,  'logical',      'Excel 2011 compatiblity mode. Output ASCII text files instead of UTF-8 files, where greek letters are replaced with their latin names, plusminus sign is replaced with +- and apostrophe is replaced with \"prime\". All other non-ASCII characters are repladed with underscore.',
@@ -122,11 +149,11 @@ read_args <- function() {
 
 	# Print default values
 	if ( ! is.null(opt[['print-input-col-names']])) {
-		cat(dft.input.col.names)
+		cat(MSDB.DFT.INPUT.COL.NAMES)
 		q(status = 0)
 	}
 	if ( ! is.null(opt[['print-output-col-names']])) {
-		cat(dft.output.col.names)
+		cat(MSDB.DFT.OUTPUT.COL.NAMES)
 		q(status = 0)
 	}
 	if ( ! is.null(opt[['print-molids-sep']])) {
@@ -134,52 +161,16 @@ read_args <- function() {
 		q(status = 0)
 	}
 	if ( ! is.null(opt[['print-pos-prec']])) {
-		cat(dft.precursors.pos)
+		cat(MSDB.DFT.PREC.POS)
 		q(status = 0)
 	}
 	if ( ! is.null(opt[['print-neg-prec']])) {
-		cat(dft.precursors.neg)
+		cat(MSDB.DFT.PREC.NEG)
 		q(status = 0)
 	}
 
 	# Set default values
-	opt <- .set.db.conn.dft(opt)
-	if ( ! is.null(opt$rtcol) && opt$rtcol == '')
-		opt$rtcol <- NULL
-	if (is.null(opt[['precursor-match']]))
-		opt[['precursor-match']] <- FALSE
-	if (is.null(opt[['precursor-rt-tol']]))
-		opt[['precursor-rt-tol']] <- dft.precusor.rt.match
-	if (is.null(opt[['pos-prec']]))
-		opt[['pos-prec']] <- dft.precursors.pos
-	if (is.null(opt[['neg-prec']]))
-		opt[['neg-prec']] <- dft.precursors.neg
-	if (is.null(opt$mzprec))
-		opt$mzprec <- dft_mzprec
-	if (is.null(opt$mzshift))
-		opt$mzshift <- dft_mzshift
-	if (is.null(opt[['excel2011comp']]))
-		opt[['excel2011comp']] <- FALSE
-	if (is.null(opt[['same-cols']]))
-		opt[['same-cols']] <- FALSE
-	if (is.null(opt[['same-rows']]))
-		opt[['same-rows']] <- FALSE
-	if (is.null(opt[['check-cols']]))
-		opt[['check-cols']] <- FALSE
-	if (is.null(opt[['input-col-names']]))
-		opt[['input-col-names']] <- dft.input.col.names
-	if (is.null(opt[['output-col-names']]))
-		opt[['output-col-names']] <- dft.output.col.names
-	if (is.null(opt[['first-val']]))
-		opt[['first-val']] <- FALSE
-	if (is.null(opt[['molids-sep']]))
-		opt[['molids-sep']] <- MSDB.DFT.MATCH.SEP
-	if (is.null(opt[['debug']]))
-		opt[['debug']] <- FALSE
-	if (is.null(opt[['all-cols']]))
-		opt[['all-cols']] <- FALSE
-	if (is.null(opt[['no-main-table-in-html-output']]))
-		opt[['no-main-table-in-html-output']] <- FALSE
+	opt <- set.dft.arg.val(opt)
 
 	# Parse retention time columns
 	if ( ! is.null(opt$rtcol))
@@ -188,14 +179,14 @@ read_args <- function() {
 	# Parse input column names
 	if ( ! is.null(opt[['input-col-names']])) {
 		custcols <- split.kv.list(opt[['input-col-names']])
-		dftcols <- split.kv.list(dft.input.col.names)
+		dftcols <- split.kv.list(MSDB.DFT.INPUT.COL.NAMES)
 		opt[['input-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
 	}
 
 	# Parse output column names
 	if ( ! is.null(opt[['output-col-names']])) {
 		custcols <- split.kv.list(opt[['output-col-names']])
-		dftcols <- split.kv.list(dft.output.col.names)
+		dftcols <- split.kv.list(MSDB.DFT.OUTPUT.COL.NAMES)
 		opt[['output-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
 	}
 
@@ -224,7 +215,7 @@ read_args <- function() {
 			warning("You must set a precision in MZ with the --mzprec option.")
 			error <- TRUE
 		}
-		if ( ( ! is.null(opt$rtcol) || opt[['all-cols']]) && (is.null(opt$rttolx) || is.null(opt$rttoly))) {
+		if ( ( ! is.null(opt$rtcol) || ! is.null(opt[['all-cols']])) && (is.null(opt$rttolx) || is.null(opt$rttoly))) {
 			warning("When chromatographic columns are set, you must provide values for --rttolx and -rttoly.")
 			error <- TRUE
 		}
@@ -422,8 +413,8 @@ output.html <- function(db, main, peaks, file, opt) {
 	html$writeTag('li', paste0("Mode = ", opt$mode, "."))
 	html$writeTag('li', paste0("M/Z precision = ", opt$mzprec, "."))
 	html$writeTag('li', paste0("M/Z shift = ", opt$mzshift, "."))
-	html$writeTag('li', paste0("Precursor match = ", (if (opt[['precursor-match']]) "yes" else "no"), "."))
-	if (opt[['precursor-match']]) {
+	html$writeTag('li', paste0("Precursor match = ", (if (is.null(opt[['precursor-match']])) "no" else "yes"), "."))
+	if ( ! is.null(opt[['precursor-match']])) {
 		html$writeTag('li', paste0("Positive precursors = ", paste0(opt[['pos-prec']], collapse = ', '), "."))
 		html$writeTag('li', paste0("Negative precursors = ", paste0(opt[['neg-prec']], collapse = ', '), "."))
 	}
@@ -431,7 +422,7 @@ output.html <- function(db, main, peaks, file, opt) {
 		html$writeTag('li', paste0("Columns = ", paste(opt$rtcol, collapse = ", "), "."))
 		html$writeTag('li', paste0("RTX = ", opt$rttolx, "."))
 		html$writeTag('li', paste0("RTY = ", opt$rttoly, "."))
-		if (opt[['precursor-match']])
+		if ( ! is.null(opt[['precursor-match']]))
 			html$writeTag('li', paste0("RTZ = ", opt[['precursor-rt-tol']], "."))
 	}
 	html$writeEndTag('ul')
@@ -439,7 +430,7 @@ output.html <- function(db, main, peaks, file, opt) {
 	# Write results
 	html$writeTag('h2', text = "Results")
 	results <- FALSE
-	if ( ! is.null(main) && nrow(main) > 0 && ! opt[['no-main-table-in-html-output']]) {
+	if ( ! is.null(main) && nrow(main) > 0 && is.null(opt[['no-main-table-in-html-output']])) {
 		html$writeTag('h3', text = "Main output")
 		html$writeTable(main)
 		results <- TRUE
@@ -465,7 +456,7 @@ options(error = function() { traceback(2) ; quit(status = 1) }, warn = 2 )
 # Read command line arguments
 opt <- read_args()
 
-if ( ! opt$debug) {
+if (is.null(opt$debug)) {
 	options(error = function() { quit(status = 1) }, warn = 0 )
 }
 
@@ -508,11 +499,11 @@ if ( ! opt[['input-col-names']][['mz']] %in% colnames(input))
 	stop(paste0('No column named "', opt[['input-col-names']][['mz']], '" in input file.'))
 
 # Set columns 'all-cols' specified
-if (opt[['all-cols']])
+if ( ! is.null(opt[['all-cols']]))
 	opt$rtcol <- db$getChromCol()
 
 # Check chrom columns
-if (opt[['check-cols']] && ! is.null(opt$rtcol)) {
+if ( ! is.null(opt[['check-cols']]) && ! is.null(opt$rtcol)) {
 	dbcols <- db$getChromCol()
 	unknown.cols <- opt$rtcol[ ! opt$rtcol %in% dbcols]
 	if (length(unknown.cols) > 0) {
@@ -526,14 +517,14 @@ if ( ! is.null(opt$rtcol) && ! opt[['input-col-names']][['rt']] %in% colnames(in
 
 # Set streams
 input.stream <- MsDbInputDataFrameStream$new(df = input, input.fields = opt[['input-col-names']])
-main.output <- MsDbOutputDataFrameStream$new(keep.unused = opt[['same-cols']], output.fields = opt[['output-col-names']], one.line = opt[['same-rows']], match.sep = opt[['molids-sep']], match.fields = list(molids = 'molid', molnames = 'molnames'), first.val = opt[['first-val']], ascii = opt[['excel2011comp']], nogreek = opt[['excel2011comp']], noapostrophe = opt[['excel2011comp']], noplusminus = opt[['excel2011comp']]) # TODO Make match.fields configurable
-peaks.output <- MsDbOutputDataFrameStream$new(keep.unused = opt[['same-cols']], output.fields = opt[['output-col-names']], first.val = opt[['first-val']], ascii = opt[['excel2011comp']], nogreek = opt[['excel2011comp']], noapostrophe = opt[['excel2011comp']], noplusminus = opt[['excel2011comp']])
+main.output <- MsDbOutputDataFrameStream$new(keep.unused = ! is.null(opt[['same-cols']]), output.fields = opt[['output-col-names']], one.line = ! is.null(opt[['same-rows']]), match.sep = opt[['molids-sep']], match.fields = list(molids = 'molid', molnames = 'molnames'), first.val = ! is.null(opt[['first-val']]), ascii = ! is.null(opt[['excel2011comp']]), nogreek = ! is.null(opt[['excel2011comp']]), noapostrophe = ! is.null(opt[['excel2011comp']]), noplusminus = ! is.null(opt[['excel2011comp']])) # TODO Make match.fields configurable
+peaks.output <- MsDbOutputDataFrameStream$new(keep.unused = ! is.null(opt[['same-cols']]), output.fields = opt[['output-col-names']], first.val = ! is.null(opt[['first-val']]), ascii = ! is.null(opt[['excel2011comp']]), nogreek = ! is.null(opt[['excel2011comp']]), noapostrophe = ! is.null(opt[['excel2011comp']]), noplusminus = ! is.null(opt[['excel2011comp']]))
 invisible(db$setInputStream(input.stream))
 db$addOutputStreams(c(main.output, peaks.output))
 
 # Search database
 mode <- if (opt$mode == POS_MODE) MSDB.TAG.POS else MSDB.TAG.NEG
-db$searchForMzRtList(mode = mode, shift = opt$mzshift, prec = opt$mzprec, rt.tol = opt$rttol, rt.tol.x = opt$rttolx, rt.tol.y = opt$rttoly, col = opt$rtcol, precursor.match = opt[['precursor-match']], precursor.rt.tol = opt[['precursor-rt-tol']], same.cols = opt[['same-cols']], same.rows = opt[['same-rows']], peak.table = ! is.null(opt[['peak-output-file']]))
+db$searchForMzRtList(mode = mode, shift = opt$mzshift, prec = opt$mzprec, rt.tol = opt$rttol, rt.tol.x = opt$rttolx, rt.tol.y = opt$rttoly, col = opt$rtcol, precursor.match = ! is.null(opt[['precursor-match']]), precursor.rt.tol = opt[['precursor-rt-tol']])
 
 # Write output
 df.write.tsv(main.output$getDataFrame(), file = opt[['output-file']], row.names = FALSE)
