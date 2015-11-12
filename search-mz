@@ -60,21 +60,11 @@ read_args <- function() {
 	# Default values
 	dft_mzshift <- 0 # in ppm
 	dft_mzprec <- 5 # in ppm
-	dft_one_line <- FALSE
-	precursor.match.dft <- FALSE
 	dft.precusor.rt.match <- 5
-	dft.same.rows <- FALSE
-	dft.same.cols <- FALSE
-	dft.check.cols <- FALSE
-	dft.debug <- FALSE
-	dft.all.cols <- FALSE
-	dft.first.val <- FALSE
-	dft.excel2011comp <- FALSE
 	dft.input.col.names <- concat.kv.list(MSDB.DFT.INPUT.FIELDS)
 	dft.output.col.names <- concat.kv.list(MSDB.DFT.OUTPUT.FIELDS)
 	dft.precursors.pos <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
 	dft.precursors.neg <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
-	dft.no.main.table.in.html.output <- FALSE
 
 	# options
 	spec = matrix(c(
@@ -157,7 +147,7 @@ read_args <- function() {
 	if ( ! is.null(opt$rtcol) && opt$rtcol == '')
 		opt$rtcol <- NULL
 	if (is.null(opt[['precursor-match']]))
-		opt[['precursor-match']] <- precursor.match.dft
+		opt[['precursor-match']] <- FALSE
 	if (is.null(opt[['precursor-rt-tol']]))
 		opt[['precursor-rt-tol']] <- dft.precusor.rt.match
 	if (is.null(opt[['pos-prec']]))
@@ -169,27 +159,27 @@ read_args <- function() {
 	if (is.null(opt$mzshift))
 		opt$mzshift <- dft_mzshift
 	if (is.null(opt[['excel2011comp']]))
-		opt[['excel2011comp']] <- dft.excel2011comp
+		opt[['excel2011comp']] <- FALSE
 	if (is.null(opt[['same-cols']]))
-		opt[['same-cols']] <- dft.same.cols
+		opt[['same-cols']] <- FALSE
 	if (is.null(opt[['same-rows']]))
-		opt[['same-rows']] <- dft.same.rows
+		opt[['same-rows']] <- FALSE
 	if (is.null(opt[['check-cols']]))
-		opt[['check-cols']] <- dft.check.cols
+		opt[['check-cols']] <- FALSE
 	if (is.null(opt[['input-col-names']]))
 		opt[['input-col-names']] <- dft.input.col.names
 	if (is.null(opt[['output-col-names']]))
 		opt[['output-col-names']] <- dft.output.col.names
 	if (is.null(opt[['first-val']]))
-		opt[['first-val']] <- dft.first.val
+		opt[['first-val']] <- FALSE
 	if (is.null(opt[['molids-sep']]))
 		opt[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 	if (is.null(opt[['debug']]))
-		opt[['debug']] <- dft.debug
+		opt[['debug']] <- FALSE
 	if (is.null(opt[['all-cols']]))
-		opt[['all-cols']] <- dft.all.cols
+		opt[['all-cols']] <- FALSE
 	if (is.null(opt[['no-main-table-in-html-output']]))
-		opt[['no-main-table-in-html-output']] <- dft.no.main.table.in.html.output
+		opt[['no-main-table-in-html-output']] <- FALSE
 
 	# Parse retention time columns
 	if ( ! is.null(opt$rtcol))
