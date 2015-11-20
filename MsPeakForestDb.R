@@ -71,6 +71,19 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		return(cols)
 	})
 	
+	#######################
+	# GET RETENTION TIMES #
+	#######################
+	
+	MsPeakForestDb$methods( getRetentionTimes = function(molid, col = NA_character_) {
+
+		if (is.null(molid) || is.na(molid) || length(molid)  != 1)
+			stop("The parameter molid must consist only in a single value.")
+			
+# TODO
+		return(list())
+	})
+	
 	#####################
 	# GET MOLECULE NAME #
 	#####################
@@ -105,7 +118,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	MsPeakForestDb$methods( findByName = function(name) {
 
 		if (is.null(name))
-			return(list())
+			return(NA_character_)
 
 		ids <- list()
 
@@ -123,5 +136,24 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		}
 
 		return(ids)
+	})
+
+	#################
+	# GET NB PEAKS #
+	#################
+	
+	MsPeakForestDb$methods( getNbPeaks = function(molid = NA_integer_, type = NA_character_) {
+
+		# Build URL
+		url <- paste0(.self$.url, 'spectra/lcms/count-peaks')
+		params <- NULL
+		if ( ! is.na(type))
+			params <- c(params, mode = if (type == MSDB.TAG.POS) 'pos' else 'neg')
+# TODO molid list
+
+		# Run request
+		n <- .self$.url.scheduler$getUrl(url, params = params)
+
+		return(as.integer(n))
 	})
 }
