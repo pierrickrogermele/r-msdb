@@ -149,7 +149,8 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		params <- NULL
 		if ( ! is.na(type))
 			params <- c(params, mode = if (type == MSDB.TAG.POS) 'pos' else 'neg')
-# TODO molid list
+		if ( ! is.null(molid) || length(molid) > 1 || ! is.na(molid))
+			params <- c(params, molids = paste(molid, collapse = ','))
 
 		# Run request
 		n <- .self$.url.scheduler$getUrl(url, params = params)
