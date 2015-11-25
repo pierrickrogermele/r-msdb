@@ -15,14 +15,14 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	# CONSTRUCTOR #
 	###############
 	
-	MsPeakForestDb$methods( initialize = function(url = NA_character_, ...) {
+	MsPeakForestDb$methods( initialize = function(url = NA_character_, useragent = NA_character_, ...) {
 
 		# Check URL
 		if (is.null(url) || is.na(url))
 		    stop("No URL defined for new MsPeakForestDb instance.")
 
 		.url <<- url
-		.url.scheduler <<- UrlRequestScheduler$new(n = 3, useragent = 'r-msdb ; pierrick.roger@gmail.com')
+		.url.scheduler <<- UrlRequestScheduler$new(n = 3, useragent = useragent)
 
 		callSuper(...)
 	})
