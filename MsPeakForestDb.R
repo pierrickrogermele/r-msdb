@@ -22,7 +22,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		    stop("No URL defined for new MsPeakForestDb instance.")
 
 		.url <<- url
-		.url.scheduler <<- UrlRequestScheduler$new(n = 3, useragent = 'r-msdb ; pierrick.roger@gmail.com', ssl.verifypeer = FALSE)
+		.url.scheduler <<- UrlRequestScheduler$new(n = 3, useragent = 'r-msdb ; pierrick.roger@gmail.com')
 
 		callSuper(...)
 	})
@@ -58,11 +58,12 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		# Set URL
 		url <- paste0(.self$.url, 'metadata/lc/list-columns')
+		params <- NULL
 		if ( ! is.null(molid))
-			url <- paste0(url, '?filter=', paste(molid, collapse = ','))
+			params <- c(filter = paste(molid, collapse = ','))
 
 		# Call webservice
-		json <- .self$.url.scheduler$getUrl(url = url)
+		json <- .self$.url.scheduler$getUrl(url = url, params = params)
 		cols <- fromJSON(json)
 
 		# Get column names
@@ -101,10 +102,11 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		if (length(non.na.molid) > 0) {
 			# Set URL
-			url <- paste0(.self$.url, 'compounds/all/names?filter=', paste(non.na.molid, collapse = ','))
+			url <- paste0(.self$.url, 'compounds/all/names')
+			params <- c(filter = paste(non.na.molid, collapse = ','))
 
 			# Call webservice
-			json <- .self$.url.scheduler$getUrl(url = url)
+			json <- .self$.url.scheduler$getUrl(url = url, params = params)
 			names[ ! is.na(molid)] <- fromJSON(json)
 		}
 
