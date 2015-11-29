@@ -49,10 +49,10 @@ test.findbyname <- function() {
 }
 
 test.columns <- function() {
-	checkTrue(class(get.db()$getChromCol()) == 'character')
-	checkTrue(length(get.db()$getChromCol()) > 0)
+	checkTrue(class(get.db()$getChromCol()) == 'data.frame')
+	checkTrue(nrow(get.db()$getChromCol()) > 0)
 	molids <- get.db()$getMoleculeIds()
-	checkTrue(length(get.db()$getChromCol(molids[1:10])) > 0)
+	checkTrue(nrow(get.db()$getChromCol(molids[1:10])) > 0)
 }
 
 test.peaks <- function() {
@@ -68,7 +68,7 @@ test.peaks <- function() {
 
 test.rt <- function() {
 	checkTrue( ! is.null(get.db()$getChromCol()))
-	checkTrue(length(get.db()$getChromCol()) > 0)
+	checkTrue(nrow(get.db()$getChromCol()) > 0)
 
 	# Get all molecule ids
 	molids <- get.db()$getMoleculeIds()
@@ -77,7 +77,7 @@ test.rt <- function() {
 	for (badid in badids[1:10]) {
 		if ( ! is.na(badid)) {
 			checkTrue(length(get.db()$getRetentionTimes(badid)) == 0)
-			checkTrue(length(get.db()$getChromCol(badid)) == 0)
+			checkTrue(nrow(get.db()$getChromCol(badid)) == 0)
 		}
 	}
 

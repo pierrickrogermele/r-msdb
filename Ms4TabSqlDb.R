@@ -139,6 +139,9 @@ if ( ! exists('Ms4TabSqlDb')) { # Do not load again if already loaded
 		# Remove duplicates
 		cols <- cols[ ! duplicated(cols)]
 
+		# Make data frame
+		cols <- data.frame(id = cols, title = cols, stringsAsFactors = FALSE)
+
 		return(cols)
 	})
 

@@ -57,17 +57,19 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	MsPeakForestDb$methods( getChromCol = function(molid = NULL) {
 
 		# Set URL
-		url <- paste0(.self$.url, 'metadata/lc/list-columns')
+		url <- paste0(.self$.url, 'metadata/lc/list-code-columns')
 		params <- NULL
 		if ( ! is.null(molid))
 			params <- c(filter = paste(molid, collapse = ','))
 
 		# Call webservice
 		json <- .self$.url.scheduler$getUrl(url = url, params = params)
-		cols <- fromJSON(json)
+		wscols <- fromJSON(json)
 
-		# Get column names
-		cols <- vapply(cols, function(c) paste(c$constructor, c$length, c$diameter, c$particuleSize, sep = '-'), FUN.VALUE = '')
+		# Build data frame
+		cols <- NULL
+		for(id in names(wscols))
+			cols <- rbind(cols, data.frame(id = id, title = wscols[[id]]$name, stringsAsFactors = FALSE))
 
 		return(cols)
 	})
@@ -158,5 +160,19 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		n <- .self$.url.scheduler$getUrl(url, params = params)
 
 		return(as.integer(n))
+	})
+
+	##############################
+	# DO SEARCH FOR MZ RT BOUNDS #
+	##############################
+
+	MsPeakForestDb$methods( .do.search.for.mz.rt.bounds = function(mode, mz.low, mz.high, rt.low = NULL, rt.high = NULL, col = NULL, attribs = NULL, molids = NULL) {
+
+		# Build URL for mz search
+		url <- paste0(.self$.url, 'spectra/lcms/peaks/get-range/', mz.low, '/', mz.high)
+
+		# Build URL for rt search
+		url <- paste0(.self$.url, 'spectra/lcms/range-rt-min/', rt.low, '/', rt.high)
+		params <- c(columns = paste(col, collapse = ',')) # TODO XXX What are the chrom col IDs ?
 	})
 }

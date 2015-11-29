@@ -106,6 +106,9 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 		# Remove duplicates
 		cn <- cn[ ! duplicated(cn)]
 
+		# Make data frame
+		cn <- data.frame(id = cn, title = cn, stringsAsFactors = FALSE)
+
 		return(cn)
 	})
 
