@@ -8,6 +8,7 @@ script.path <- sub("--file=", "", args[grep("--file=", args)])
 source(file.path(dirname(script.path), '..', 'MsPeakForestDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'MsFileDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'MsXlsDb.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', 'Ms4TabSqlDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
 
 #############
@@ -113,7 +114,7 @@ set.db <- function(type) {
 
 	.g.db <<- switch(type,
 		peakforest = MsPeakForestDb$new(url = PEAKFOREST.URL, useragent = USERAGENT),
-		'4tabsql' = Ms4TabSql(host = extract.address(ENV[['RMSDB_4TABSQL_URL']]), port = extract.port(ENV[['RMSDB_4TABSQL_URL']]), dbname = ENV[['RMSDB_4TABSQL_DBNAME']], user = ENV[['RMSDB_4TABSQL_USER']], password = ENV[['RMSDB_4TABSQL_PASSWORD']]),
+		'4tabsql' = Ms4TabSqlDb$new(host = extract.address(ENV[['RMSDB_4TABSQL_URL']]), port = extract.port(ENV[['RMSDB_4TABSQL_URL']]), dbname = ENV[['RMSDB_4TABSQL_DBNAME']], user = ENV[['RMSDB_4TABSQL_USER']], password = ENV[['RMSDB_4TABSQL_PASSWORD']]),
 		file = MsFileDb$new(file = file.path(dirname(script.path), 'filedb.tsv')),
 		file.cust.modes = { db <- MsFileDb$new(file = file.path(dirname(script.path), 'filedb-custmodes.tsv')) ; db$setDbMsModes(c(pos = '+', neg = '-')) ; db },
 		file.cust.cols = { db <- MsFileDb$new(file = file.path(dirname(script.path), 'filedb-custcols.tsv')) ; db$setDbFields(msdb.make.db.fields(c(mz = 'MASS', rt = 'RETTime', col = 'column'))) ; db },
