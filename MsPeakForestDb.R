@@ -1,7 +1,6 @@
 if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 	library(methods)
-	library(RJSONIO)
 	source('MsDb.R')
 	source(file.path('..', 'r-lib', 'UrlRequestScheduler.R'))
 
@@ -33,6 +32,8 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	
 	MsPeakForestDb$methods( getMoleculeIds = function() {
 
+		library(RJSONIO)
+
 		json <- .self$.url.scheduler$getUrl(url = paste0(.self$.url, 'compounds/all/ids'))
 		ids <- as.character(fromJSON(json))
 
@@ -55,6 +56,8 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	###############################
 	
 	MsPeakForestDb$methods( getChromCol = function(molid = NULL) {
+
+		library(RJSONIO)
 
 		# Set URL
 		url <- paste0(.self$.url, 'metadata/lc/list-code-columns')
@@ -93,6 +96,8 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 	MsPeakForestDb$methods( getMoleculeName = function(molid) {
 
+		library(RJSONIO)
+
 		if (is.null(molid))
 			return(NA_character_)
 
@@ -120,6 +125,8 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	################
 
 	MsPeakForestDb$methods( findByName = function(name) {
+
+		library(RJSONIO)
 
 		if (is.null(name))
 			return(NA_character_)
