@@ -182,9 +182,8 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		# Query params
 		params <- NULL
-# TODO
-#		if ( ! is.null(mode))
-#			params <- c(params, query = if (mode == MSDB.TAG.POS) 'positive' else 'negative')
+		if ( ! is.null(mode))
+			params <- c(params, mode = if (mode == MSDB.TAG.POS) 'positive' else 'negative')
 
 		# Call service and get JSON
 		json <- .self$.url.scheduler$getUrl(url = url, params = params)
