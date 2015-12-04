@@ -42,12 +42,6 @@ read.args <- function() {
   ), byrow = TRUE, ncol = 5)
    
   opt <- getopt(spec)
-  opt$all = if (is.null(opt$all)) FALSE else TRUE
-  opt$filedb = if (is.null(opt$filedb)) FALSE else TRUE
-  opt$peakforest = if (is.null(opt$peakforest)) FALSE else TRUE
-  opt$quick = if (is.null(opt$quick)) FALSE else TRUE
-  opt$xlsdb = if (is.null(opt$xlsdb)) FALSE else TRUE
-  opt$zap = if (is.null(opt$zap)) FALSE else TRUE
 
   # help
   if ( ! is.null(opt$help)) {
@@ -131,20 +125,20 @@ opt <- read.args()
 
 # Set db types to test
 dbtypes <- character()
-if (opt$filedb || opt$all)
+if (! is.null(opt$filedb) || ! is.null(opt$all))
 	dbtypes <- c(dbtypes, 'file', 'file.cust.modes', 'file.cust.cols')
-if (opt[['4tabsql']] || opt$all)
+if ( ! is.null(opt[['4tabsql']]) || ! is.null(opt$all))
 	dbtypes <- c(dbtypes, '4tabsql')
-if (opt$peakforest || opt$all)
+if (! is.null(opt$peakforest) || ! is.null(opt$all))
 	dbtypes <- c(dbtypes, 'peakforest')
-if (opt$xlsdb || opt$all)
+if (! is.null(opt$xlsdb) || ! is.null(opt$all))
 	dbtypes <- c(dbtypes, 'xls')
-if (opt$zap && length(dbtypes) > 0)
+if (! is.null(opt$zap) && length(dbtypes) > 0)
 	dbtypes <- dbtypes[1]
 
 # Define set of functions
 test.fcts = '^(.+\\.)?test\\..+'
-if (opt$quick || opt$all)
+if (! is.null(opt$quick) || ! is.null(opt$all))
 	test.fcts = '^test\\..+'
 if ( ! is.null(opt$name))
 	test.fcts = paste0('^', opt$name, '$')

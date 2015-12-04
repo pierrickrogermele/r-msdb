@@ -168,6 +168,32 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		return(as.integer(n))
 	})
+	
+	#################
+	# GET MZ VALUES #
+	#################
+	
+	MsPeakForestDb$methods( getMzValues = function(mode = NULL) {
+
+		library(RJSONIO)
+
+		# Build URL
+		url <- paste0(.self$.url, 'spectra/lcms/peaks/list-mz')
+
+		# Query params
+		params <- NULL
+# TODO
+#		if ( ! is.null(mode))
+#			params <- c(params, query = if (mode == MSDB.TAG.POS) 'positive' else 'negative')
+
+		# Call service and get JSON
+		json <- .self$.url.scheduler$getUrl(url = url, params = params)
+
+		# Convert JSON to R object
+		mz <- fromJSON(json)
+
+		return(mz)
+	})
 
 	##############################
 	# DO SEARCH FOR MZ RT BOUNDS #
@@ -175,11 +201,30 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 	MsPeakForestDb$methods( .do.search.for.mz.rt.bounds = function(mode, mz.low, mz.high, rt.low = NULL, rt.high = NULL, col = NULL, attribs = NULL, molids = NULL) {
 
+		library(RJSONIO)
+
 		# Build URL for mz search
 		url <- paste0(.self$.url, 'spectra/lcms/peaks/get-range/', mz.low, '/', mz.high)
 
-		# Build URL for rt search
-		url <- paste0(.self$.url, 'spectra/lcms/range-rt-min/', rt.low, '/', rt.high)
-		params <- c(columns = paste(col, collapse = ',')) # TODO XXX What are the chrom col IDs ?
+		# Call service and get JSON
+		json <- .self$.url.scheduler$getUrl(url = url)
+
+		# Convert JSON to R object
+		spectra <- fromJSON(json)
+
+		# Build result data frame
+		results <- data.frame(id = vapply(spectra, function(x) as.character(x$id), FUN.VALUE = ''))
+		results[[.self$.output.fields$mztheo]] <- vapply(spectra, function(x) x$theoricalMass, FUN.VALUE = 1.0)
+		results[[.self$.output.fields$comp]] <- vapply(spectra, function(x) x$composition, FUN.VALUE = '')
+		results[[.self$.output.fields$attr]] <- vapply(spectra, function(x) x$attribution, FUN.VALUE = '')
+
+		# RT search
+		if ( ! is.null(rt.low) && ! is.null(rt.high)) {
+			# Build URL for rt search
+			url <- paste0(.self$.url, 'spectra/lcms/range-rt-min/', rt.low, '/', rt.high)
+			params <- c(columns = paste(col, collapse = ',')) # TODO XXX What are the chrom col IDs ?
+		}
+
+		return(results)
 	})
 }

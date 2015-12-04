@@ -271,7 +271,9 @@ if ( ! exists('Ms4TabSqlDb')) { # Do not load again if already loaded
 		# Build request
 		select <- paste0("select distinct pk.mass as ", .self$.output.fields$mztheo)
 		from <- " from peaklist as pk"
-		where <- paste0(" where ", if (mode == MSDB.TAG.POS) '' else 'not ', 'pk.ion_pos')
+		where <- ""
+		if ( ! is.null(mode))
+			where <- paste0(" where ", if (mode == MSDB.TAG.POS) '' else 'not ', 'pk.ion_pos')
 
 		# Assemble request
 		request <- paste0(select, from, where, ';')
