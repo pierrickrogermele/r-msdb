@@ -22,6 +22,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		.url <<- url
 		.url.scheduler <<- UrlRequestScheduler$new(n = 3, useragent = useragent)
+		.self$.url.scheduler$setVerbose(1L)
 
 		callSuper(...)
 	})
@@ -209,13 +210,13 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		json <- .self$.url.scheduler$getUrl(url = url)
 
 		# Convert JSON to R object
-		spectra <- fromJSON(json)
+		spectra <- fromJSON(json, nullValue = NA)
 
 		# Build result data frame
 		results <- data.frame(id = vapply(spectra, function(x) as.character(x$id), FUN.VALUE = ''))
-		results[[.self$.output.fields$mztheo]] <- vapply(spectra, function(x) x$theoricalMass, FUN.VALUE = 1.0)
-		results[[.self$.output.fields$comp]] <- vapply(spectra, function(x) x$composition, FUN.VALUE = '')
-		results[[.self$.output.fields$attr]] <- vapply(spectra, function(x) x$attribution, FUN.VALUE = '')
+		results[[.self$.output.fields$mztheo]] <- vapply(spectra, function(x) as.numeric(x$theoricalMass), FUN.VALUE = 1.1)
+		results[[.self$.output.fields$comp]] <- vapply(spectra, function(x) as.character(x$composition), FUN.VALUE = '')
+		results[[.self$.output.fields$attr]] <- vapply(spectra, function(x) as.character(x$attribution), FUN.VALUE = '')
 
 		# RT search
 		if ( ! is.null(rt.low) && ! is.null(rt.high)) {
