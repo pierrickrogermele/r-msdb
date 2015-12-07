@@ -93,9 +93,9 @@ test.search.mz.no.result <- function() {
 	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
 	mzvals <- sort(mzvals)
 	r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mzvals[1] - 10), mode = MSDB.TAG.POS, prec = 5)
-	checkTrue(all(c('id', 'mz') %in% colnames(r)))
+	checkTrue(all(c(MSDB.TAG.MOLID, MSDB.TAG.MZ) %in% colnames(r)))
 	checkTrue(nrow(r) == 1)
-	checkTrue(is.na(r[1, 'id']))
+	checkTrue(is.na(r[1, MSDB.TAG.MOLID]))
 }
 
 test.search.mz <- function() {
@@ -109,7 +109,7 @@ test.search.mz <- function() {
 			# Search
 			r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5)
 			checkTrue(nrow(r) >= 1)
-			checkTrue( ! is.na(r[1, 'id']))
+			checkTrue( ! is.na(r[1, MSDB.TAG.MOLID]))
 
 			checkTrue(nrow(get.db()$searchForMzRtList(msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5)) >= 1)
 			checkTrue(nrow(get.db()$searchForMzRtList(msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 100)) >= 1)
@@ -121,14 +121,10 @@ test.search.mz <- function() {
 }
 
 test.search.mzrt <- function() {
+
 	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
 	mzvals <- sort(mzvals)
-
-	# Search with no result
-	r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mzvals[1] - 10), mode = MSDB.TAG.POS, prec = 5)
-	checkTrue(all(c('id', 'mz') %in% colnames(r)))
-	checkTrue(nrow(r) == 1)
-	checkTrue(is.na(r[1, 'id']))
+	mzvals <- mzvals[1:20]
 
 	for (mz in mzvals) {
 		if ( ! is.na(mz)) {
@@ -136,18 +132,21 @@ test.search.mzrt <- function() {
 			# Search with mz only
 			r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5)
 			checkTrue(nrow(r) >= 1)
-			checkTrue( ! is.na(r[1, 'id']))
-			molid <- r[1, 'id']
+			checkTrue( ! is.na(r[1, MSDB.TAG.MOLID]))
+			molid <- r[1, MSDB.TAG.MOLID]
 
 			# Get retention times of molecule
 			rts <- get.db()$getRetentionTimes(molid)
 
 			# Loop on all columns
 			for (col in names(rts))
-				for (rt in rts[col])
-					checkTrue(nrow(get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, col = col)) >= 1)
+				for (rt in rts[col]) {
+					r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, col = col)
+					checkTrue(nrow(r) >= 1)
+					checkTrue(MSDB.TAG.RT %in% colnames(r))
 
-			break
+					break # Make test not too long
+				}
 		}
 	}
 }

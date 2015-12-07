@@ -213,10 +213,11 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		spectra <- fromJSON(json, nullValue = NA)
 
 		# Build result data frame
-		results <- data.frame(id = vapply(spectra, function(x) as.character(x$id), FUN.VALUE = ''))
-		results[[.self$.output.fields$mztheo]] <- vapply(spectra, function(x) as.numeric(x$theoricalMass), FUN.VALUE = 1.1)
-		results[[.self$.output.fields$comp]] <- vapply(spectra, function(x) as.character(x$composition), FUN.VALUE = '')
-		results[[.self$.output.fields$attr]] <- vapply(spectra, function(x) as.character(x$attribution), FUN.VALUE = '')
+		results <- data.frame()
+		results[[MSDB.TAG.MOLID]] <- vapply(spectra, function(x) as.character(x$id), FUN.VALUE = '')
+		results[[MSDB.TAG.MZTHEO]] <- vapply(spectra, function(x) as.numeric(x$theoricalMass), FUN.VALUE = 1.1)
+		results[[MSDB.TAG.COMP]] <- vapply(spectra, function(x) as.character(x$composition), FUN.VALUE = '')
+		results[[MSDB.TAG.ATTR]] <- vapply(spectra, function(x) as.character(x$attribution), FUN.VALUE = '')
 
 		# RT search
 		if ( ! is.null(rt.low) && ! is.null(rt.high)) {

@@ -20,8 +20,8 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		.observers <<- NULL
 		.output.streams <<- NULL
 		.input.stream <<- NULL
-		.input.fields <<- MSDB.DFT.INPUT.FIELDS
-		.output.fields <<- MSDB.DFT.OUTPUT.FIELDS
+		.input.fields <<- msdb.get.dft.input.fields()
+		.output.fields <<- msdb.get.dft.output.fields()
 		.molids.sep <<- MSDB.DFT.MATCH.SEP
 		.prec <<- MSDB.DFT.PREC
 		

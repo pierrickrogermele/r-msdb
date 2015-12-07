@@ -13,7 +13,7 @@ if ( ! exists('MsDbInputStream')) { # Do not load again if already loaded
 	# CONSTRUCTOR #
 	###############
 
-	MsDbInputStream$methods( initialize = function(input.fields = MSDB.DFT.INPUT.FIELDS, ...) {
+	MsDbInputStream$methods( initialize = function(input.fields = msdb.get.dft.input.fields(), ...) {
 		
 		.input.fields <<- input.fields
 

@@ -47,8 +47,8 @@ MSDB.DFT[['precursor-rt-tol']] <- 5
 MSDB.DFT[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())
 MSDB.DFT[['db-ms-modes']] <- concat.kv.list(MSDB.DFT.MODES)
-MSDB.DFT[['input-col-names']] <- concat.kv.list(MSDB.DFT.INPUT.FIELDS)
-MSDB.DFT[['output-col-names']] <- concat.kv.list(MSDB.DFT.OUTPUT.FIELDS)
+MSDB.DFT[['input-col-names']] <- concat.kv.list(msdb.get.dft.input.fields())
+MSDB.DFT[['output-col-names']] <- concat.kv.list(msdb.get.dft.output.fields())
 MSDB.DFT[['pos-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
 MSDB.DFT[['neg-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
 

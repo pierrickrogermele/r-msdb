@@ -13,7 +13,7 @@ if ( ! exists('MsDbInputDataFrameStream')) { # Do not load again if already load
 	# CONSTRUCTOR #
 	###############
 	
-	MsDbInputDataFrameStream$methods( initialize = function(df = data.frame(), input.fields = MSDB.DFT.INPUT.FIELDS, ...) {
+	MsDbInputDataFrameStream$methods( initialize = function(df = data.frame(), input.fields = msdb.get.dft.input.fields(), ...) {
 
 		.df <<- df
 		.i <<- 0L
