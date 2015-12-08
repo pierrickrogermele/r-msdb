@@ -102,7 +102,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		wscols <- .self$.get.url(url = url, params = params)
 
 		# Build data frame
-		cols <- NULL
+		cols <- data.frame(id = character(), title = character())
 		for(id in names(wscols))
 			cols <- rbind(cols, data.frame(id = id, title = wscols[[id]]$name, stringsAsFactors = FALSE))
 
