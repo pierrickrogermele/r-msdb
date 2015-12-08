@@ -49,10 +49,14 @@ test.findbyname <- function() {
 }
 
 test.columns <- function() {
-	checkTrue(class(get.db()$getChromCol()) == 'data.frame')
-	checkTrue(nrow(get.db()$getChromCol()) > 0)
+	cols <- get.db()$getChromCol()
+	checkTrue(class(cols) == 'data.frame')
+	checkTrue(nrow(cols) > 0)
+	checkTrue('id' %in% colnames(cols))
+	checkTrue('title' %in% colnames(cols))
 	molids <- get.db()$getMoleculeIds()
-	checkTrue(nrow(get.db()$getChromCol(molids[1:10])) > 0)
+	cols <- get.db()$getChromCol(molids[1:100])
+	checkTrue(is.null(cols) || nrow(cols) > 0)
 }
 
 test.peaks <- function() {
@@ -60,10 +64,21 @@ test.peaks <- function() {
 	checkTrue(get.db()$getNbPeaks(type = MSDB.TAG.POS) > 0)
 	checkTrue(get.db()$getNbPeaks(type = MSDB.TAG.NEG) > 0)
 	molids <- get.db()$getMoleculeIds()
-	submolids <- molids[1:10] # get subset of molids
-	checkTrue(get.db()$getNbPeaks(submolids) > 0)
-	checkTrue(get.db()$getNbPeaks(submolids, MSDB.TAG.POS) > 0)
-	checkTrue(get.db()$getNbPeaks(submolids, MSDB.TAG.NEG) > 0)
+	submolids <- molids[1:100] # get subset of molids
+	checkTrue(get.db()$getNbPeaks(molid = submolids) >= 0)
+	checkTrue(get.db()$getNbPeaks(molid = submolids, type = MSDB.TAG.POS) >= 0)
+	checkTrue(get.db()$getNbPeaks(molid = submolids, type = MSDB.TAG.NEG) >= 0)
+}
+
+long.test.peaks <- function() {
+	molids <- get.db()$getMoleculeIds()
+	for (i in molids) {
+		print(i)
+		if (get.db()$getNbPeaks(submolids) > 0) {
+			checkTrue(get.db()$getNbPeaks(molid = i, type = MSDB.TAG.POS) > 0 || get.db()$getNbPeaks(molid = i, type = MSDB.TAG.NEG) > 0)
+			break;
+		}
+	}
 }
 
 test.rt <- function() {
@@ -147,6 +162,8 @@ test.search.mzrt <- function() {
 						r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, col = col)
 						checkTrue(nrow(r) >= 1)
 						checkTrue(MSDB.TAG.RT %in% colnames(r))
+						checkTrue(MSDB.TAG.COL %in% colnames(r))
+						checkTrue(MSDB.TAG.COLRT %in% colnames(r))
 
 						return(NULL) # Make test not too long: stop at the first mz whose compound has retention times.
 					}

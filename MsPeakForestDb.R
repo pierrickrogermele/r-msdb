@@ -31,20 +31,34 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	# GET URL #
 	###########
 
-	MsPeakForestDb$methods( .get.url.json = function(url, params = NULL) {
+	MsPeakForestDb$methods( .get.url = function(url, params = NULL, ret.type = 'json') {
 
-		library(RJSONIO)
+		res <- NULL
 
-		json <- .self$.url.scheduler$getUrl(url = url, params = params)
+		content <- .self$.url.scheduler$getUrl(url = url, params = params)
 
-		robj <- fromJSON(json)
+		if (ret.type == 'json') {
 
-		if (class(robj) == 'list' && 'success' %in% names(robj) && robj$success == FALSE) {
-			param.str <- if (is.null(params)) '' else paste('?', vapply(names(params), function(p) paste(p, params[[p]], sep = '='), FUN.VALUE = ''), collapse = '&', sep = '')
-			stop(paste0("Failed to run web service. URL was \"", url, param.str, "\"."))
+			library(RJSONIO)
+
+			res <- fromJSON(content)
+
+			if (class(res) == 'list' && 'success' %in% names(res) && res$success == FALSE) {
+				param.str <- if (is.null(params)) '' else paste('?', vapply(names(params), function(p) paste(p, params[[p]], sep = '='), FUN.VALUE = ''), collapse = '&', sep = '')
+				stop(paste0("Failed to run web service. URL was \"", url, param.str, "\"."))
+			}
+		} else {
+			if (ret.type == 'integer') {
+				if (grepl('^[0-9]+$', content, perl = TRUE))
+					res <- as.integer(content)
+				else {
+					library(RJSONIO)
+					res <- fromJSON(content)
+				}
+			}
 		}
 
-		return(robj)
+		return(res)
 	})
 
 	####################
@@ -78,29 +92,20 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	
 	MsPeakForestDb$methods( getChromCol = function(molid = NULL) {
 
-		library(RJSONIO)
-
-		print('TATA 1')
-		print(molid)
 		# Set URL
 		url <- paste0(.self$.url, 'metadata/lc/list-code-columns')
 		params <- NULL
 		if ( ! is.null(molid))
-			params <- c(molids = paste(molid, collapse = ','))
+			params <- list(molids = paste(molid, collapse = ','))
 
-		print('TATA 2')
 		# Call webservice
-		json <- .self$.url.scheduler$getUrl(url = url, params = params)
-		wscols <- fromJSON(json)
-		print(length(wscols))
+		wscols <- .self$.get.url(url = url, params = params)
 
-		print('TATA 3')
 		# Build data frame
 		cols <- NULL
 		for(id in names(wscols))
 			cols <- rbind(cols, data.frame(id = id, title = wscols[[id]]$name, stringsAsFactors = FALSE))
 
-		print('TATA 4')
 		return(cols)
 	})
 	
@@ -122,7 +127,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 			params <- list(molids = paste(molid, collapse = ','))
 
 		# Call webservice
-		spectra <- .self$.get.url.json(url = url, params = params)
+		spectra <- .self$.get.url(url = url, params = params)
 		if (class(spectra) == 'list' && length(spectra) > 0) {
 			for (s in spectra)
 				if (is.na(col) || s$liquidChromatography$columnCode %in% col) {
@@ -209,13 +214,13 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		params <- NULL
 		if ( ! is.na(type))
 			params <- c(params, mode = if (type == MSDB.TAG.POS) 'pos' else 'neg')
-		if ( ! is.null(molid) || length(molid) > 1 || ! is.na(molid))
+		if ( ! is.null(molid) && (length(molid) > 1 || ! is.na(molid)))
 			params <- c(params, molids = paste(molid, collapse = ','))
 
 		# Run request
-		n <- .self$.url.scheduler$getUrl(url, params = params)
+		n <- .self$.get.url(url = url, params = params, ret.type = 'integer')
 
-		return(as.integer(n))
+		return(sum(n))
 	})
 	
 	#################
