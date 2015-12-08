@@ -124,7 +124,7 @@ test.search.mzrt <- function() {
 
 	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
 	mzvals <- sort(mzvals)
-	mzvals <- mzvals[1:20]
+	mzvals <- mzvals
 
 	for (mz in mzvals) {
 		if ( ! is.na(mz)) {
@@ -132,21 +132,25 @@ test.search.mzrt <- function() {
 			# Search with mz only
 			r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5)
 			checkTrue(nrow(r) >= 1)
-			checkTrue( ! is.na(r[1, MSDB.TAG.MOLID]))
-			molid <- r[1, MSDB.TAG.MOLID]
+			checkTrue(MSDB.TAG.MOLID %in% colnames(r))
+			checkTrue(class(r[[MSDB.TAG.MOLID]]) == 'character')
 
-			# Get retention times of molecule
-			rts <- get.db()$getRetentionTimes(molid)
+			# Loop on all molids obtained
+			for (molid in r[[MSDB.TAG.MOLID]]) {
 
-			# Loop on all columns
-			for (col in names(rts))
-				for (rt in rts[col]) {
-					r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, col = col)
-					checkTrue(nrow(r) >= 1)
-					checkTrue(MSDB.TAG.RT %in% colnames(r))
+				# Get retention times of molecule
+				rts <- get.db()$getRetentionTimes(molid)
 
-					break # Make test not too long
-				}
+				# Loop on all columns
+				for (col in names(rts))
+					for (rt in rts[[col]]) {
+						r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, col = col)
+						checkTrue(nrow(r) >= 1)
+						checkTrue(MSDB.TAG.RT %in% colnames(r))
+
+						return(NULL) # Make test not too long: stop at the first mz whose compound has retention times.
+					}
+			}
 		}
 	}
 }

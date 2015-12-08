@@ -27,6 +27,26 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		callSuper(...)
 	})
 
+	###########
+	# GET URL #
+	###########
+
+	MsPeakForestDb$methods( .get.url.json = function(url, params = NULL) {
+
+		library(RJSONIO)
+
+		json <- .self$.url.scheduler$getUrl(url = url, params = params)
+
+		robj <- fromJSON(json)
+
+		if (class(robj) == 'list' && 'success' %in% names(robj) && robj$success == FALSE) {
+			param.str <- if (is.null(params)) '' else paste('?', vapply(names(params), function(p) paste(p, params[[p]], sep = '='), FUN.VALUE = ''), collapse = '&', sep = '')
+			stop(paste0("Failed to run web service. URL was \"", url, param.str, "\"."))
+		}
+
+		return(robj)
+	})
+
 	####################
 	# GET MOLECULE IDS #
 	####################
@@ -60,21 +80,27 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		library(RJSONIO)
 
+		print('TATA 1')
+		print(molid)
 		# Set URL
 		url <- paste0(.self$.url, 'metadata/lc/list-code-columns')
 		params <- NULL
 		if ( ! is.null(molid))
-			params <- c(filter = paste(molid, collapse = ','))
+			params <- c(molids = paste(molid, collapse = ','))
 
+		print('TATA 2')
 		# Call webservice
 		json <- .self$.url.scheduler$getUrl(url = url, params = params)
 		wscols <- fromJSON(json)
+		print(length(wscols))
 
+		print('TATA 3')
 		# Build data frame
 		cols <- NULL
 		for(id in names(wscols))
 			cols <- rbind(cols, data.frame(id = id, title = wscols[[id]]$name, stringsAsFactors = FALSE))
 
+		print('TATA 4')
 		return(cols)
 	})
 	
@@ -86,9 +112,31 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		if (is.null(molid) || is.na(molid) || length(molid)  != 1)
 			stop("The parameter molid must consist only in a single value.")
-			
-# TODO
-		return(list())
+
+		rt <- list()
+
+		# Set URL
+		url <- paste0(.self$.url, 'spectra/lcms/search')
+		params <- NULL
+		if ( ! is.null(molid))
+			params <- list(molids = paste(molid, collapse = ','))
+
+		# Call webservice
+		spectra <- .self$.get.url.json(url = url, params = params)
+		if (class(spectra) == 'list' && length(spectra) > 0) {
+			for (s in spectra)
+				if (is.na(col) || s$liquidChromatography$columnCode %in% col) {
+					ret.time <- (s$RTmin + s$RTmax) / 2
+					c <- s$liquidChromatography$columnCode
+					if (c %in% names(rt)) {
+						if ( ! ret.time %in% rt[[c]])
+							rt[[c]] <- c(rt[[c]], ret.time)
+					} else
+						rt[[c]] <- ret.time
+				}
+		}
+
+		return(rt)
 	})
 	
 	#####################
@@ -111,7 +159,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		if (length(non.na.molid) > 0) {
 			# Set URL
 			url <- paste0(.self$.url, 'compounds/all/names')
-			params <- c(filter = paste(non.na.molid, collapse = ','))
+			params <- c(molids = paste(non.na.molid, collapse = ','))
 
 			# Call webservice
 			json <- .self$.url.scheduler$getUrl(url = url, params = params)
@@ -213,8 +261,9 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		spectra <- fromJSON(json, nullValue = NA)
 
 		# Build result data frame
-		results <- data.frame()
-		results[[MSDB.TAG.MOLID]] <- vapply(spectra, function(x) as.character(x$id), FUN.VALUE = '')
+		ids <- vapply(spectra, function(x) as.character(x$id), FUN.VALUE = '')
+		results <- data.frame(id = ids, stringsAsFactors = FALSE)
+		colnames(results) <- MSDB.TAG.MOLID
 		results[[MSDB.TAG.MZTHEO]] <- vapply(spectra, function(x) as.numeric(x$theoricalMass), FUN.VALUE = 1.1)
 		results[[MSDB.TAG.COMP]] <- vapply(spectra, function(x) as.character(x$composition), FUN.VALUE = '')
 		results[[MSDB.TAG.ATTR]] <- vapply(spectra, function(x) as.character(x$attribution), FUN.VALUE = '')
