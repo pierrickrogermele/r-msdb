@@ -254,17 +254,33 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 			results <- rbind(results, data.frame(MSDB.TAG.MOLID = vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = '') ,
 												 MSDB.TAG.MZTHEO = as.numeric(x$theoricalMass),
 												 MSDB.TAG.COMP = as.character(x$composition),
-												 MSDB.TAG.ATTR = as.character(x$attribution)))
+												 MSDB.TAG.ATTR = as.character(x$attribution),
+												 stringsAsFactors = FALSE))
 		colnames(results) <- vapply(colnames(results), function(s) eval(parse(text=s)), FUN.VALUE = '') # Rename columns with proper names
 
 		# RT search
 		if ( ! is.null(rt.low) && ! is.null(rt.high)) {
+
 			# Build URL for rt search
 			url <- paste0(.self$.url, 'spectra/lcms/range-rt-min/', rt.low, '/', rt.high)
 			params <- NULL
 			if ( ! is.null(col))
-				params <- c(columns = paste(col, collapse = ',')) # TODO XXX What are the chrom col IDs ?
+				params <- c(columns = paste(col, collapse = ','))
+
+			# Run query
 			rtspectra <- .self$.get.url(url = url, params = params)
+
+			# Get compound/molecule IDs
+			rt.res <- NULL
+			for (x in spectra)
+				rt.res <- rbind(rt.res, data.frame(MSDB.TAG.MOLID = vapply(x$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = ''),
+				                                   MSDB.TAG.COL = as.character(x$liquidChromatography$columnCode),
+				                                   MSDB.TAG.COLRT = (as.numeric(x$RTmin) + as.numeric(x$RTmax)) / 2,
+				                                   stringsAsFactors = FALSE))
+			colnames(rt.res) <- vapply(colnames(rt.res), function(s) eval(parse(text=s)), FUN.VALUE = '') # Rename columns with proper names
+
+			# Add retention times and column info
+			results <- merge(results, rt.res)
 		}
 
 		return(results)

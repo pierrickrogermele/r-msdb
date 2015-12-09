@@ -159,7 +159,7 @@ test.search.mzrt <- function() {
 				# Loop on all columns
 				for (col in names(rts))
 					for (rt in rts[[col]]) {
-						r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, col = col)
+						r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, col = col, rt.tol.x = 5, rt.tol.y = 0.8)
 						checkTrue(nrow(r) >= 1)
 						checkTrue(MSDB.TAG.RT %in% colnames(r))
 						checkTrue(MSDB.TAG.COL %in% colnames(r))
