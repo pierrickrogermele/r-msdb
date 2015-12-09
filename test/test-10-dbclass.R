@@ -56,7 +56,7 @@ test.columns <- function() {
 	checkTrue('title' %in% colnames(cols))
 	molids <- get.db()$getMoleculeIds()
 	cols <- get.db()$getChromCol(molids[1:100])
-	checkTrue(is.null(cols) || nrow(cols) > 0)
+	checkTrue(nrow(cols) >= 0)
 }
 
 test.peaks <- function() {

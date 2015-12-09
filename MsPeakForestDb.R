@@ -41,7 +41,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 			library(RJSONIO)
 
-			res <- fromJSON(content)
+			res <- fromJSON(content, nullValue = NA)
 
 			if (class(res) == 'list' && 'success' %in% names(res) && res$success == FALSE) {
 				param.str <- if (is.null(params)) '' else paste('?', vapply(names(params), function(p) paste(p, params[[p]], sep = '='), FUN.VALUE = ''), collapse = '&', sep = '')
@@ -53,7 +53,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 					res <- as.integer(content)
 				else {
 					library(RJSONIO)
-					res <- fromJSON(content)
+					res <- fromJSON(content, nullValue = NA)
 				}
 			}
 		}
@@ -67,10 +67,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	
 	MsPeakForestDb$methods( getMoleculeIds = function() {
 
-		library(RJSONIO)
-
-		json <- .self$.url.scheduler$getUrl(url = paste0(.self$.url, 'compounds/all/ids'))
-		ids <- as.character(fromJSON(json))
+		ids <- as.character(.self$.get.url(url = paste0(.self$.url, 'compounds/all/ids')))
 
 		return(ids)
 	})
@@ -81,9 +78,9 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	
 	MsPeakForestDb$methods( getNbMolecules = function() {
 
-		n <- .self$.url.scheduler$getUrl(url = paste0(.self$.url, 'compounds/all/count'))
+		n <- .self$.get.url(url = paste0(.self$.url, 'compounds/all/count'), ret.type = 'integer')
 
-		return(as.integer(n))
+		return(n)
 	})
 	
 	###############################
@@ -167,8 +164,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 			params <- c(molids = paste(non.na.molid, collapse = ','))
 
 			# Call webservice
-			json <- .self$.url.scheduler$getUrl(url = url, params = params)
-			names[ ! is.na(molid)] <- fromJSON(json)
+			names[ ! is.na(molid)] <- .self$.get.url(url = url, params = params)
 		}
 
 		return(names)
@@ -179,8 +175,6 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	################
 
 	MsPeakForestDb$methods( findByName = function(name) {
-
-		library(RJSONIO)
 
 		if (is.null(name))
 			return(NA_character_)
@@ -194,8 +188,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 			else {
 				url <- paste0(.self$.url, 'search/compounds/name/', curlEscape(n))
-				json <- .self$.url.scheduler$getUrl(url = url)
-				compounds <- fromJSON(json)$compoundNames
+				compounds <- .self$.get.url(url = url)$compoundNames
 				ids <- c(ids, list(vapply(compounds, function(c) as.character(c$compound$id), FUN.VALUE = '')))
 			}
 		}
@@ -229,8 +222,6 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	
 	MsPeakForestDb$methods( getMzValues = function(mode = NULL) {
 
-		library(RJSONIO)
-
 		# Build URL
 		url <- paste0(.self$.url, 'spectra/lcms/peaks/list-mz')
 
@@ -239,11 +230,8 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		if ( ! is.null(mode))
 			params <- c(params, mode = if (mode == MSDB.TAG.POS) 'positive' else 'negative')
 
-		# Call service and get JSON
-		json <- .self$.url.scheduler$getUrl(url = url, params = params)
-
-		# Convert JSON to R object
-		mz <- fromJSON(json)
+		# Get MZ valuels
+		mz <- .self$.get.url(url = url, params = params)
 
 		return(mz)
 	})
@@ -254,30 +242,29 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 	MsPeakForestDb$methods( .do.search.for.mz.rt.bounds = function(mode, mz.low, mz.high, rt.low = NULL, rt.high = NULL, col = NULL, attribs = NULL, molids = NULL) {
 
-		library(RJSONIO)
-
 		# Build URL for mz search
 		url <- paste0(.self$.url, 'spectra/lcms/peaks/get-range/', mz.low, '/', mz.high)
 
-		# Call service and get JSON
-		json <- .self$.url.scheduler$getUrl(url = url)
-
-		# Convert JSON to R object
-		spectra <- fromJSON(json, nullValue = NA)
+		# Get spectra
+		spectra <- .self$.get.url(url = url)
 
 		# Build result data frame
-		ids <- vapply(spectra, function(x) as.character(x$id), FUN.VALUE = '')
-		results <- data.frame(id = ids, stringsAsFactors = FALSE)
-		colnames(results) <- MSDB.TAG.MOLID
-		results[[MSDB.TAG.MZTHEO]] <- vapply(spectra, function(x) as.numeric(x$theoricalMass), FUN.VALUE = 1.1)
-		results[[MSDB.TAG.COMP]] <- vapply(spectra, function(x) as.character(x$composition), FUN.VALUE = '')
-		results[[MSDB.TAG.ATTR]] <- vapply(spectra, function(x) as.character(x$attribution), FUN.VALUE = '')
+		results <- NULL
+		for (x in spectra)
+			results <- rbind(results, data.frame(MSDB.TAG.MOLID = vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = '') ,
+												 MSDB.TAG.MZTHEO = as.numeric(x$theoricalMass),
+												 MSDB.TAG.COMP = as.character(x$composition),
+												 MSDB.TAG.ATTR = as.character(x$attribution)))
+		colnames(results) <- vapply(colnames(results), function(s) eval(parse(text=s)), FUN.VALUE = '') # Rename columns with proper names
 
 		# RT search
 		if ( ! is.null(rt.low) && ! is.null(rt.high)) {
 			# Build URL for rt search
 			url <- paste0(.self$.url, 'spectra/lcms/range-rt-min/', rt.low, '/', rt.high)
-			params <- c(columns = paste(col, collapse = ',')) # TODO XXX What are the chrom col IDs ?
+			params <- NULL
+			if ( ! is.null(col))
+				params <- c(columns = paste(col, collapse = ',')) # TODO XXX What are the chrom col IDs ?
+			rtspectra <- .self$.get.url(url = url, params = params)
 		}
 
 		return(results)
