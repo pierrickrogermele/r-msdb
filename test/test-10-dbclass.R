@@ -165,6 +165,8 @@ test.search.mzrt <- function() {
 						checkTrue(MSDB.TAG.COL %in% colnames(r))
 						checkTrue(MSDB.TAG.COLRT %in% colnames(r))
 
+# TODO Find good mz and badmz, goodrt and badrt, and run a search with (mz = c(goodmz, goodmz, badmz, badmz), rt = c(goodrt, badrt, goodrt, badrt)).
+
 						return(NULL) # Make test not too long: stop at the first mz whose compound has retention times.
 					}
 			}
