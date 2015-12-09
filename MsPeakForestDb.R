@@ -249,9 +249,10 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		spectra <- .self$.get.url(url = url)
 
 		# Build result data frame
-		results <- data.frame(MSDB.TAG.MOLID = character(), MSDB.TAG.MZTHEO = numeric(), MSDB.TAG.COMP = character(), MSDB.TAG.ATTR = character())
+		results <- data.frame(MSDB.TAG.MOLID = character(), MSDB.TAG.MOLNAMES = character(), MSDB.TAG.MZTHEO = numeric(), MSDB.TAG.COMP = character(), MSDB.TAG.ATTR = character())
 		for (x in spectra)
-			results <- rbind(results, data.frame(MSDB.TAG.MOLID = vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = '') ,
+			results <- rbind(results, data.frame(MSDB.TAG.MOLID = vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = ''),
+			                                     MSDB.TAG.MOLNAMES = vapply(x$source$listOfCompounds, function(c) paste(c$names, collapse = MSDB.MULTIVAL.FIELD.SEP), FUN.VALUE = ''),
 												 MSDB.TAG.MZTHEO = as.numeric(x$theoricalMass),
 												 MSDB.TAG.COMP = as.character(x$composition),
 												 MSDB.TAG.ATTR = as.character(x$attribution),
