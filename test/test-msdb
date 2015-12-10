@@ -14,7 +14,7 @@ source(file.path(dirname(script.path), '..', '..', 'r-lib', 'nethlp.R'), chdir =
 # CONSTANTS #
 #############
 
-PEAKFOREST.URL <- 'http://rest.peakforest.org/'
+PEAKFOREST.URL <- 'https://rest.peakforest.org/'
 USERAGENT <- 'r-msdb.test ; pierrick.roger@gmail.com'
 
 ENV <- Sys.getenv()
