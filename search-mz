@@ -25,9 +25,6 @@ source(file.path(dirname(script_path), '../r-biodb/PubchemConn.R'), chdir = TRUE
 
 PROG <- sub('^.*/([^/]+)$', '\\1', commandArgs()[4], perl = TRUE)
 
-POS_MODE <- 'pos'
-NEG_MODE <- 'neg'
-
 # Authorized database types
 MSDB.XLS <- 'xls'
 MSDB.4TABSQL <- '4tabsql'
@@ -36,12 +33,20 @@ MSDB.PEAKFOREST <- 'peakforest'
 MSDB.VALS <- c(MSDB.XLS, MSDB.4TABSQL, MSDB.FILE, MSDB.PEAKFOREST)
 
 # Authorized mode values
+POS_MODE <- 'pos'
+NEG_MODE <- 'neg'
 MSDB.MODE.VALS <- c(POS_MODE, NEG_MODE)
+
+# Authorized mz tolerance unit values
+MZTOLUNIT.PPM <- 'ppm'
+MZTOLUNIT.PLAIN <- 'plain' # same as mz: mass-to-charge ratio
+MSDB.MZTOLUNIT.VALS <- c(MZTOLUNIT.PPM, MZTOLUNIT.PLAIN)
 
 # Default 
 MSDB.DFT <- list()
 MSDB.DFT[['mzshift']] <- 0 # in ppm
 MSDB.DFT[['mzprec']] <- 5 # in ppm
+MSDB.DFT[['mztolunit']] <- 'ppm'
 MSDB.DFT[['precursor-rt-tol']] <- 5
 MSDB.DFT[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())
@@ -159,6 +164,7 @@ make.getopt.spec <- function() {
 		'mode',             'm',            1,  'character',    paste0('MS mode. Possible values are:', paste(MSDB.MODE.VALS, collapse = ", "), '.'),
 		'mzshift',          's',            1,  'numeric',      paste0('Shift on m/z, in ppm. Default is ', MSDB.DFT$mzshift,'.'),
 		'mzprec',           'p',            1,  'numeric',      paste0('Tolerance on m/z, in ppm. Default is ', MSDB.DFT$mzprec,'.'),
+		'mztolunit',        NA_character_,  1,  'character',    paste0('Tolerance on m/z, in ppm. Default is ', dft_mztolunit,'.'),
 		'rttol',            'r',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rttolx',           'x',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rttoly',           'y',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
@@ -240,6 +246,10 @@ read_args <- function() {
 		}
 		if ( ( ! is.null(opt$rtcol) || ! is.null(opt[['all-cols']])) && (is.null(opt$rttolx) || is.null(opt$rttoly))) {
 			warning("When chromatographic columns are set, you must provide values for --rttolx and -rttoly.")
+			error <- TRUE
+		}
+		if (is.null(opt$mztolunit) || ( ! opt$mztolunit %in% MSDB.MZTOLUNIT.VALS)) {
+			warning("You must specify an M/Z tolerance unit through the --mztolunit option.")
 			error <- TRUE
 		}
 	}
