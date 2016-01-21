@@ -9,11 +9,16 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 
 	# Field tags
 	MSDB.TAG.MZ <- 'mz'
+	MSDB.TAG.MZEXP <- 'mzexp'
+	MSDB.TAG.MZTHEO <- 'mztheo'
 	MSDB.TAG.RT <- 'rt'
 	MSDB.TAG.MODE <- 'mode'
 	MSDB.TAG.MOLID <- 'molid'
 	MSDB.TAG.COL <- 'col'
+	MSDB.TAG.COLRT <- 'colrt'
 	MSDB.TAG.ATTR <- 'attr'
+	MSDB.TAG.INT <- 'int' # Absolute intensity
+	MSDB.TAG.REL <- 'rel' # Relative intensity
 	MSDB.TAG.COMP <- 'comp'
 	MSDB.TAG.MOLNAMES <- 'molnames'
 	MSDB.TAG.MOLCOMP <- 'molcomp'
@@ -37,12 +42,39 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 	MSDB.DFT.PREC <- list()
 	MSDB.DFT.PREC[[MSDB.TAG.POS]] <- c("[(M+H)]+", "[M+H]+", "[(M+Na)]+", "[M+Na]+", "[(M+K)]+", "[M+K]+")
 	MSDB.DFT.PREC[[MSDB.TAG.NEG]] <- c("[(M-H)]-", "[M-H]-", "[(M+Cl)]-", "[M+Cl]-")
-	MSDB.DFT.INPUT.FIELDS <- list( mz = 'mz', rt = 'rt')
 	MSDB.DFT.OUTPUT.FIELDS <- list( mz = 'mz', rt = 'rt', col = 'col', colrt = 'colrt', molid = 'id', attr = 'attribution', comp = 'composition', int = 'intensity', rel = 'relative', mzexp = 'mzexp', mztheo = 'mztheo', msmatching = 'msmatching', molnames = 'molnames', molcomp = 'molcomp', molmass = 'molmass', inchi = 'inchi', inchikey = 'inchikey', pubchem = 'pubchem', chebi = 'chebi', hmdb = 'hmdb', kegg = 'kegg')
 	MSDB.DFT.OUTPUT.MULTIVAL.FIELD.SEP <- MSDB.MULTIVAL.FIELD.SEP
 	MSDB.DFT.MATCH.FIELDS <- list( molids = 'molid', molnames = 'molnames')
 	MSDB.DFT.MATCH.SEP <- ','
 	MSDB.DFT.MODES <- list( pos = 'POS', neg = 'NEG')
+
+	############################
+	# GET DEFAULT INPUT FIELDS #
+	############################
+
+	msdb.get.dft.input.fields <- function () {
+
+		dft.fields <- list()
+
+		for(f in c(MSDB.TAG.MZ, MSDB.TAG.RT))
+			dft.fields[[f]] <- f
+
+		return(dft.fields)
+	}
+
+	#############################
+	# GET DEFAULT OUTPUT FIELDS #
+	#############################
+
+	msdb.get.dft.output.fields <- function () {
+
+		dft.fields <- list()
+
+		for(f in c(MSDB.TAG.MZ, MSDB.TAG.RT, MSDB.TAG.COL, MSDB.TAG.COLRT, MSDB.TAG.MOLID, MSDB.TAG.ATTR, MSDB.TAG.COMP, MSDB.TAG.INT, MSDB.TAG.REL, MSDB.TAG.MZEXP, MSDB.TAG.MZTHEO, MSDB.TAG.MOLNAMES, MSDB.TAG.MOLCOMP, MSDB.TAG.MOLMASS, MSDB.TAG.INCHI, MSDB.TAG.INCHIKEY, MSDB.TAG.PUBCHEM, MSDB.TAG.CHEBI, MSDB.TAG.HMDB, MSDB.TAG.KEGG))
+			dft.fields[[f]] <- f
+
+		return(dft.fields)
+	}
 
 	#########################
 	# GET DEFAULT DB FIELDS #
@@ -93,24 +125,26 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 
 	msdb.make.input.df <- function(mz, rt = NULL) {
 
+		field <- msdb.get.dft.input.fields()
+
 		x <- data.frame()
 
 		# Set mz
 		if (length(mz) > 1)
-			x[seq(mz), MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.MZ]]] <- mz
+			x[seq(mz), field[[MSDB.TAG.MZ]]] <- mz
 		else if (length(mz) == 1)
-			x[1, MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.MZ]]] <- mz
+			x[1, field[[MSDB.TAG.MZ]]] <- mz
 		else
-			x[, MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.MZ]]] <- numeric()
+			x[, field[[MSDB.TAG.MZ]]] <- numeric()
 
 		# Set rt
 		if ( ! is.null(rt)) {
 			if (length(rt) > 1)
-				x[seq(rt), MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.RT]]] <- rt
+				x[seq(rt), field[[MSDB.TAG.RT]]] <- rt
 			else if (length(rt) == 1)
-				x[1, MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.RT]]] <- rt
+				x[1, field[[MSDB.TAG.RT]]] <- rt
 			else
-				x[, MSDB.DFT.INPUT.FIELDS[[MSDB.TAG.RT]]] <- numeric()
+				x[, field[[MSDB.TAG.RT]]] <- numeric()
 		}
 
 		return(x)

@@ -49,10 +49,14 @@ test.findbyname <- function() {
 }
 
 test.columns <- function() {
-	checkTrue(class(get.db()$getChromCol()) == 'character')
-	checkTrue(length(get.db()$getChromCol()) > 0)
+	cols <- get.db()$getChromCol()
+	checkTrue(class(cols) == 'data.frame')
+	checkTrue(nrow(cols) > 0)
+	checkTrue('id' %in% colnames(cols))
+	checkTrue('title' %in% colnames(cols))
 	molids <- get.db()$getMoleculeIds()
-	checkTrue(length(get.db()$getChromCol(molids[1:10])) > 0)
+	cols <- get.db()$getChromCol(molids[1:100])
+	checkTrue(nrow(cols) >= 0)
 }
 
 test.peaks <- function() {
@@ -60,15 +64,26 @@ test.peaks <- function() {
 	checkTrue(get.db()$getNbPeaks(type = MSDB.TAG.POS) > 0)
 	checkTrue(get.db()$getNbPeaks(type = MSDB.TAG.NEG) > 0)
 	molids <- get.db()$getMoleculeIds()
-	submolids <- molids[1:10] # get subset of molids
-	checkTrue(get.db()$getNbPeaks(submolids) > 0)
-	checkTrue(get.db()$getNbPeaks(submolids, MSDB.TAG.POS) > 0)
-	checkTrue(get.db()$getNbPeaks(submolids, MSDB.TAG.NEG) > 0)
+	submolids <- molids[1:100] # get subset of molids
+	checkTrue(get.db()$getNbPeaks(molid = submolids) >= 0)
+	checkTrue(get.db()$getNbPeaks(molid = submolids, type = MSDB.TAG.POS) >= 0)
+	checkTrue(get.db()$getNbPeaks(molid = submolids, type = MSDB.TAG.NEG) >= 0)
+}
+
+long.test.peaks <- function() {
+	molids <- get.db()$getMoleculeIds()
+	for (i in molids) {
+		print(i)
+		if (get.db()$getNbPeaks(submolids) > 0) {
+			checkTrue(get.db()$getNbPeaks(molid = i, type = MSDB.TAG.POS) > 0 || get.db()$getNbPeaks(molid = i, type = MSDB.TAG.NEG) > 0)
+			break;
+		}
+	}
 }
 
 test.rt <- function() {
 	checkTrue( ! is.null(get.db()$getChromCol()))
-	checkTrue(length(get.db()$getChromCol()) > 0)
+	checkTrue(nrow(get.db()$getChromCol()) > 0)
 
 	# Get all molecule ids
 	molids <- get.db()$getMoleculeIds()
@@ -77,7 +92,7 @@ test.rt <- function() {
 	for (badid in badids[1:10]) {
 		if ( ! is.na(badid)) {
 			checkTrue(length(get.db()$getRetentionTimes(badid)) == 0)
-			checkTrue(length(get.db()$getChromCol(badid)) == 0)
+			checkTrue(nrow(get.db()$getChromCol(badid)) == 0)
 		}
 	}
 
@@ -93,9 +108,31 @@ test.search.mz.no.result <- function() {
 	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
 	mzvals <- sort(mzvals)
 	r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mzvals[1] - 10), mode = MSDB.TAG.POS, prec = 5)
-	checkTrue(all(c('id', 'mz') %in% colnames(r)))
+	checkTrue(MSDB.TAG.MOLID %in% colnames(r))
+	checkTrue(MSDB.TAG.MOLNAMES %in% colnames(r))
+	checkTrue(MSDB.TAG.MZ %in% colnames(r))
+	checkTrue(MSDB.TAG.MZTHEO %in% colnames(r))
+	checkTrue(MSDB.TAG.ATTR %in% colnames(r))
+	checkTrue(MSDB.TAG.COMP %in% colnames(r))
 	checkTrue(nrow(r) == 1)
-	checkTrue(is.na(r[1, 'id']))
+	checkTrue(is.na(r[1, MSDB.TAG.MOLID]))
+}
+
+test.search.mzrt.no.result <- function() {
+	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
+	mzvals <- sort(mzvals)
+	r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mzvals[1] - 10, rt = 8.9), mode = MSDB.TAG.POS, prec = 5, rt.tol.x = 5, rt.tol.y = 0.8, col = c('blabla', 'yep'))
+	checkTrue(MSDB.TAG.MOLID %in% colnames(r))
+	checkTrue(MSDB.TAG.MOLNAMES %in% colnames(r))
+	checkTrue(MSDB.TAG.MZ %in% colnames(r))
+	checkTrue(MSDB.TAG.RT %in% colnames(r))
+	checkTrue(MSDB.TAG.MZTHEO %in% colnames(r))
+	checkTrue(MSDB.TAG.ATTR %in% colnames(r))
+	checkTrue(MSDB.TAG.COMP %in% colnames(r))
+	checkTrue(MSDB.TAG.COLRT %in% colnames(r))
+	checkTrue(MSDB.TAG.COL %in% colnames(r))
+	checkTrue(nrow(r) == 1)
+	checkTrue(is.na(r[1, MSDB.TAG.MOLID]))
 }
 
 test.search.mz <- function() {
@@ -109,7 +146,7 @@ test.search.mz <- function() {
 			# Search
 			r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5)
 			checkTrue(nrow(r) >= 1)
-			checkTrue( ! is.na(r[1, 'id']))
+			checkTrue( ! is.na(r[1, MSDB.TAG.MOLID]))
 
 			checkTrue(nrow(get.db()$searchForMzRtList(msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5)) >= 1)
 			checkTrue(nrow(get.db()$searchForMzRtList(msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 100)) >= 1)
@@ -121,14 +158,10 @@ test.search.mz <- function() {
 }
 
 test.search.mzrt <- function() {
+
 	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
 	mzvals <- sort(mzvals)
-
-	# Search with no result
-	r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mzvals[1] - 10), mode = MSDB.TAG.POS, prec = 5)
-	checkTrue(all(c('id', 'mz') %in% colnames(r)))
-	checkTrue(nrow(r) == 1)
-	checkTrue(is.na(r[1, 'id']))
+	mzvals <- mzvals
 
 	for (mz in mzvals) {
 		if ( ! is.na(mz)) {
@@ -136,18 +169,29 @@ test.search.mzrt <- function() {
 			# Search with mz only
 			r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5)
 			checkTrue(nrow(r) >= 1)
-			checkTrue( ! is.na(r[1, 'id']))
-			molid <- r[1, 'id']
+			checkTrue(MSDB.TAG.MOLID %in% colnames(r))
+			checkTrue(class(r[[MSDB.TAG.MOLID]]) == 'character')
 
-			# Get retention times of molecule
-			rts <- get.db()$getRetentionTimes(molid)
+			# Loop on all molids obtained
+			for (molid in r[[MSDB.TAG.MOLID]]) {
 
-			# Loop on all columns
-			for (col in names(rts))
-				for (rt in rts[col])
-					checkTrue(nrow(get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, col = col)) >= 1)
+				# Get retention times of molecule
+				rts <- get.db()$getRetentionTimes(molid)
 
-			break
+				# Loop on all columns
+				for (col in names(rts))
+					for (rt in rts[[col]]) {
+						r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, col = col, rt.tol.x = 5, rt.tol.y = 0.8)
+						checkTrue(nrow(r) >= 1)
+						checkTrue(MSDB.TAG.RT %in% colnames(r))
+						checkTrue(MSDB.TAG.COL %in% colnames(r))
+						checkTrue(MSDB.TAG.COLRT %in% colnames(r))
+
+# TODO Find good mz and badmz, goodrt and badrt, and run a search with (mz = c(goodmz, goodmz, badmz, badmz), rt = c(goodrt, badrt, goodrt, badrt)).
+
+						return(NULL) # Make test not too long: stop at the first mz whose compound has retention times.
+					}
+			}
 		}
 	}
 }

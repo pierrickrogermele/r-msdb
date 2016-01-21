@@ -1,23 +1,24 @@
 #!/usr/bin/env Rscript
 # vi: ft=R
 args <- commandArgs(trailingOnly = F)
-script_path <- sub("--file=","",args[grep("--file=",args)])
+script.path <- sub("--file=","",args[grep("--file=",args)])
 library(getopt)
-source(file.path(dirname(script_path), 'common.R'), chdir = TRUE)
-source(file.path(dirname(script_path), 'MsFileDb.R'), chdir = TRUE)
-source(file.path(dirname(script_path), 'MsPeakForestDb.R'), chdir = TRUE)
-source(file.path(dirname(script_path), 'MsXlsDb.R'), chdir = TRUE)
-source(file.path(dirname(script_path), 'Ms4TabSqlDb.R'), chdir = TRUE)
-source(file.path(dirname(script_path), 'MsDbLogger.R'), chdir = TRUE)
-source(file.path(dirname(script_path), 'MsDbInputDataFrameStream.R'), chdir = TRUE)
-source(file.path(dirname(script_path), 'MsDbOutputDataFrameStream.R'), chdir = TRUE)
-source(file.path(dirname(script_path), '../r-lib/htmlhlp.R'), chdir = TRUE)
-source(file.path(dirname(script_path), '../r-lib/strhlp.R'), chdir = TRUE)
-source(file.path(dirname(script_path), '../r-lib/fshlp.R'), chdir = TRUE)
-source(file.path(dirname(script_path), '../r-biodb/KeggConn.R'), chdir = TRUE)
-source(file.path(dirname(script_path), '../r-biodb/HmdbConn.R'), chdir = TRUE)
-source(file.path(dirname(script_path), '../r-biodb/ChebiConn.R'), chdir = TRUE)
-source(file.path(dirname(script_path), '../r-biodb/PubchemConn.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'common.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'MsFileDb.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'MsPeakForestDb.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'MsXlsDb.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'Ms4TabSqlDb.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'MsDbLogger.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'MsDbInputDataFrameStream.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'MsDbOutputDataFrameStream.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-lib/htmlhlp.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-lib/strhlp.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-lib/fshlp.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-biodb/KeggConn.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-biodb/HmdbConn.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-biodb/ChebiConn.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-biodb/PubchemConn.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
 
 #############
 # CONSTANTS #
@@ -51,8 +52,8 @@ MSDB.DFT[['precursor-rt-tol']] <- 5
 MSDB.DFT[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())
 MSDB.DFT[['db-ms-modes']] <- concat.kv.list(MSDB.DFT.MODES)
-MSDB.DFT[['input-col-names']] <- concat.kv.list(MSDB.DFT.INPUT.FIELDS)
-MSDB.DFT[['output-col-names']] <- concat.kv.list(MSDB.DFT.OUTPUT.FIELDS)
+MSDB.DFT[['input-col-names']] <- concat.kv.list(msdb.get.dft.input.fields())
+MSDB.DFT[['output-col-names']] <- concat.kv.list(msdb.get.dft.output.fields())
 MSDB.DFT[['pos-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
 MSDB.DFT[['neg-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
 
@@ -191,6 +192,7 @@ make.getopt.spec <- function() {
 		'database',         'd',            1,  'character',    paste0('Set database to use: "xls" for an Excel database, "file" for a single file database, "4tabsql" for a 4Tab SQL database, and "peakforest" for a connection to PeakForest database.'),
 		'url',              NA_character_,  1,  'character',    'URL of database. For "peakforest" database it is the HTTP URL, for the "xls" database it is the path to the directory containing the Excel files, for the "file" database it is the path to the file database and for the "4tabsql" database it is the IP address of the server.',
 		'cache-dir',        NA_character_,  1,  'character',    'Path to directory where to store cache files. Only used when database flag is set to "xls".',
+		'useragent',        NA_character_,  1,  'character',    'User agent. Used by the "Peakforest" database.',
 		'dbname',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
 		'user',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
 		'password',      NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
@@ -330,6 +332,10 @@ read_args <- function() {
 				warning("When using PeakForest database, you must specify the URL of the PeakForest server with option --url.")
 				error <- TRUE
 			}
+			if (is.null(opt$useragent)) {
+				warning("When using PeakForest database, you must specify a user agent with option --useragent.")
+				error <- TRUE
+			}
 		}
 	
 		return(error)
@@ -362,7 +368,7 @@ read_args <- function() {
 		}
 
 		db <- switch(opt$database,
-		             peakforest = MSPeakForestDb$new(url = opt$url),
+		             peakforest = MsPeakForestDb$new(url = opt$url, useragent = opt$useragent),
 		             xls = MsXlsDb(db_dir = opt$url, cache_dir = opt[['cache-dir']]),
 		             '4tabsql' = Ms4TabSql(host = extract.address(opt$url), port = extract.port(opt$url), dbname = opt$dbname, user = opt$user, password = opt$password),
 		             file = MsFileDb(file = opt$url),
@@ -471,8 +477,7 @@ db <- .load.db(opt)
 # Print columns
 if ( ! is.null(opt[['list-cols']])) {
 	cols <- db$getChromCol()
-	output <- data.frame(id = cols, title = cols, stringsAsFactors = FALSE)
-	df.write.tsv(output, file = opt[['output-file']])
+	df.write.tsv(cols, file = opt[['output-file']])
 	q(status = 0)
 }
 

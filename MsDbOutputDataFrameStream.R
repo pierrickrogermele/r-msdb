@@ -15,7 +15,7 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 	# CONSTRUCTOR #
 	###############
 	
-	MsDbOutputDataFrameStream$methods( initialize = function(keep.unused = FALSE, one.line = FALSE, match.sep = MSDB.DFT.MATCH.SEP, match.fields = MSDB.DFT.MATCH.FIELDS, output.fields = MSDB.DFT.OUTPUT.FIELDS, multval.field.sep = MSDB.DFT.OUTPUT.MULTIVAL.FIELD.SEP, first.val = FALSE, ascii = FALSE, noapostrophe = FALSE, noplusminus = FALSE, nogreek = FALSE, ...) {
+	MsDbOutputDataFrameStream$methods( initialize = function(keep.unused = FALSE, one.line = FALSE, match.sep = MSDB.DFT.MATCH.SEP, match.fields = MSDB.DFT.MATCH.FIELDS, output.fields = msdb.get.dft.output.fields(), multval.field.sep = MSDB.DFT.OUTPUT.MULTIVAL.FIELD.SEP, first.val = FALSE, ascii = FALSE, noapostrophe = FALSE, noplusminus = FALSE, nogreek = FALSE, ...) {
 
 		.df <<- data.frame()
 		
