@@ -47,7 +47,7 @@ MSDB.MZTOLUNIT.VALS <- c(MZTOLUNIT.PPM, MZTOLUNIT.PLAIN)
 MSDB.DFT <- list()
 MSDB.DFT[['mzshift']] <- 0 # in ppm
 MSDB.DFT[['mzprec']] <- 5 # in ppm
-MSDB.DFT[['mztolunit']] <- 'ppm'
+MSDB.DFT[['mztolunit']] <- MZTOLUNIT.PPM
 MSDB.DFT[['precursor-rt-tol']] <- 5
 MSDB.DFT[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())
@@ -165,7 +165,7 @@ make.getopt.spec <- function() {
 		'mode',             'm',            1,  'character',    paste0('MS mode. Possible values are:', paste(MSDB.MODE.VALS, collapse = ", "), '.'),
 		'mzshift',          's',            1,  'numeric',      paste0('Shift on m/z, in ppm. Default is ', MSDB.DFT$mzshift,'.'),
 		'mzprec',           'p',            1,  'numeric',      paste0('Tolerance on m/z, in ppm. Default is ', MSDB.DFT$mzprec,'.'),
-		'mztolunit',        NA_character_,  1,  'character',    paste0('Tolerance on m/z, in ppm. Default is ', dft_mztolunit,'.'),
+		'mztolunit',        NA_character_,  1,  'character',    paste0('Tolerance on m/z, in ppm. Default is ', MSDB.DFT$mztolunit,'.'),
 		'rttol',            'r',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rttolx',           'x',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rttoly',           'y',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
