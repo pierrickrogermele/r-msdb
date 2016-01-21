@@ -143,12 +143,15 @@ if (! is.null(opt$quick) || ! is.null(opt$all))
 if ( ! is.null(opt$name))
 	test.fcts = paste0('^', opt$name, '$')
 
-# Loop on al db types
+# Loop on all db types
 for (type in dbtypes) {
 	cat("****************************************************************\n")
 	cat("RUNNING TESTS FOR DB TYPE \"", type, "\".\n", sep = '')
 	set.conn.flag(type)
 	set.db(type)
 	test.suite <- defineTestSuite('msdb', dirname(script.path), testFileRegexp = '^test-.+\\.R$', testFuncRegexp = test.fcts)
-	runTestSuite(test.suite)
+	isValidTestSuite(test.suite)
+	test.results <- runTestSuite(test.suite)
+	print(test.results)
+#	printTextProtocol(test.results, showDetails = FALSE)
 }
