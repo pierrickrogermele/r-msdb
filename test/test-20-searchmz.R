@@ -123,7 +123,7 @@ zlong.test.peak.output.file <- function() {
 	y <- read.table('mzrt-output.tsv', header = TRUE)
 	z <- read.table('mzrt-output-peaks.tsv', header = TRUE)
 	checkTrue(nrow(x) == nrow(y))
-	checkTrue(all(c('id', 'mz', 'rt', 'col', 'colrt', 'attribution', 'composition') %in% colnames(z)))
+	checkTrue(all(c('molid', 'mz', 'rt', 'col', 'colrt', 'attr', 'comp') %in% colnames(z)))
 }
 
 test.peak.output.file <- function() {
