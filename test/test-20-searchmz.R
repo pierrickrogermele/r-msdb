@@ -29,8 +29,13 @@ test.cust.input.file <- function() {
 }
 
 test.match.mz <- function() {
+
 	# Match on mz values
 	call.search.mz(c('-m pos', '-i mz-input-small.tsv', '-o mz-output.tsv'))
+
+	# Match with custom tolerance
+	call.search.mz(c('-m pos', '-i mz-input-small.tsv', '-o mz-output.tsv', '--mzprec 5', '--mzshift 0'))
+	call.search.mz(c('-m pos', '-i mz-input-small.tsv', '-o mz-output.tsv', '--mzprec 0.1', '--mzshift 0', '--mztolunit plain'))
 }
 
 test.match.mz.unused.rt <- function() {

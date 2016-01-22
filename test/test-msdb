@@ -8,7 +8,9 @@ script.path <- sub("--file=", "", args[grep("--file=", args)])
 source(file.path(dirname(script.path), '..', 'MsPeakForestDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'MsFileDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'MsXlsDb.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', 'Ms4TabSqlDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', '..', 'r-lib', 'strhlp.R'), chdir = TRUE)
 
 #############
 # CONSTANTS #
@@ -18,6 +20,18 @@ PEAKFOREST.URL <- 'https://rest.peakforest.org/'
 USERAGENT <- 'r-msdb.test ; pierrick.roger@gmail.com'
 
 ENV <- Sys.getenv()
+for (var in c('RMSDB_4TABSQL_URL', 'RMSDB_4TABSQL_DBNAME', 'RMSDB_4TABSQL_USER', 'RMSDB_4TABSQL_PASSWORD'))
+	if ( ! var %in% names(ENV))
+		ENV[[var]] <- NA_character_
+
+DB <- list(
+           'filedb' = list( type = 'file', db = MsFileDb, url = file.path(dirname(script.path), 'filedb.tsv')),
+           'filedb-cust-modes' = list( type = 'file', db = MsFileDb, url = file.path(dirname(script.path), 'filedb-custmodes.tsv'), modes = list(pos = '+', neg = '-')),
+           'filedb-cust-cols' = list( type = 'file', db = MsFileDb, url = file.path(dirname(script.path), 'filedb-custcols.tsv'), fields = list(mz = 'MASS', rt = 'RETTime', col = 'column')),
+			'4tabsqldb' = list(type = '4tabsql', db = Ms4TabSqlDb, url = ENV[['RMSDB_4TABSQL_URL']], dbname = ENV[['RMSDB_4TABSQL_DBNAME']], user = ENV[['RMSDB_4TABSQL_USER']], password = ENV[['RMSDB_4TABSQL_PASSWORD']]),
+			'peakforestdb' = list(type = 'peakforest', db = MsPeakForestDb, url = PEAKFOREST.URL, useragent = USERAGENT),
+			'xlsdb' = list(type = 'xls', db = MsXlsDb, url = file.path(dirname(script.path), 'xlsdb'), cache_dir = file.path(dirname(script.path), 'xlsdb', 'cache'))
+          )
 
 #############
 # READ ARGS #
@@ -30,15 +44,16 @@ read.args <- function() {
   
   # options
   spec = matrix(c(
-    'all',          'a', 0, 'logical',      'Run all tests. Disabled by default.',
-    'help',         'h', 0, 'logical',      'Print this help.',
-    'filedb',       'f', 0, 'logical',      'Run tests on single file database. Disabled by default.',
-    'peakforest',   'p', 0, 'logical',      'Run tests on PeakForest database. Disabled by default.',
-    '4tabsql',      '4', 0, 'logical',      'Run tests on 4TabSql database. Disabled by default.',
-    'name',         'n', 1, 'character',    'Run only test of the specified name. Unset by default.',
-    'quick',        'q', 0, 'logical',      'Do not run long tests. Disabled by default.',
-    'xlsdb',        'x', 0, 'logical',      'Run tests on XLS database. Disabled by default.',
-    'zap',          'z', 0, 'logical',      'Just run test on the first db and stop.'
+    'all',                  'a', 0, 'logical',      'Run all tests. Disabled by default.',
+    'help',                 'h', 0, 'logical',      'Print this help.',
+    'filedb',               'f', 0, 'logical',      'Run tests on single file database. Disabled by default.',
+    'filedb-cust-modes',    'm', 0, 'logical',      'Run tests on single file database with custome modes. Disabled by default.',
+    'filedb-cust-cols',     'c', 0, 'logical',      'Run tests on single file database with custome colums. Disabled by default.',
+    'peakforestdb',         'p', 0, 'logical',      'Run tests on PeakForest database. Disabled by default.',
+    '4tabsqldb',            '4', 0, 'logical',      'Run tests on 4TabSql database. Disabled by default.',
+    'name',                 'n', 1, 'character',    'Run only test of the specified name. Unset by default.',
+    'quick',                'q', 0, 'logical',      'Do not run long tests. Disabled by default.',
+    'xlsdb',                'x', 0, 'logical',      'Run tests on XLS database. Disabled by default.'
   ), byrow = TRUE, ncol = 5)
    
   opt <- getopt(spec)
@@ -60,14 +75,29 @@ read.args <- function() {
 
 set.conn.flag <- function(type) {
 
-	.g.conn.flag <<- switch(type,
-		file = paste('-d file --url', file.path(dirname(script.path), 'filedb.tsv')),
-		file.cust.modes = paste('-d file --url', file.path(dirname(script.path), 'filedb-custmodes.tsv'), '--db-ms-modes', 'pos=+,neg=-'),
-		file.cust.cols = paste('-d file --url', file.path(dirname(script.path), 'filedb-custcols.tsv'), '--db-fields', 'mz=MASS,rt=RETTime,col=column'),
-		xls = paste('-d xls --url', 'xlsdb'),
-		'4tabsql' = paste('-d', '4tabsql', '--url', ENV[['RMSDB_4TABSQL_URL']], '--dbname', ENV[['RMSDB_4TABSQL_DBNAME']], '--user', ENV[['RMSDB_4TABSQL_USER']], '--password', ENV[['RMSDB_4TABSQL_PASSWORD']]),
-		peakforest = paste('-d peakforest', '--url', PEAKFOREST.URL, '--useragent', paste0('"', USERAGENT, '"')),
-		NULL)
+	db <- DB[[type]]
+
+	.g.conn.flag <<- c(.g.conn.flag, '-d', db$type, '--url', db$url)
+
+	for(field in names(db)) {
+		.g.conn.flag <- switch(field,
+			useragent = c(.g.conn.flag, '--useragent', paste0('"', db$useragent, '"')),
+			modes = c(.g.conn.flag, '--db-ms-modes', concat.kv.list(db$modes)),
+			fields = c(.g.conn.flag, '--db-fields', concat.kv.list(db$fields)),
+			dbname = c(.g.conn.flag, '--dbname', db$dbname),
+			user = c(.g.conn.flag, '--user', db$user),
+			password = c(.g.conn.flag, '--password', db$password)
+		)
+	}
+
+#		switch(type,
+#		file = paste('-d file --url', file.path(dirname(script.path), 'filedb.tsv')),
+#		file.cust.modes = paste('-d file --url', file.path(dirname(script.path), 'filedb-custmodes.tsv'), '--db-ms-modes', 'pos=+,neg=-'),
+#		file.cust.cols = paste('-d file --url', file.path(dirname(script.path), 'filedb-custcols.tsv'), '--db-fields', 'mz=MASS,rt=RETTime,col=column'),
+#		xls = paste('-d xls --url', 'xlsdb'),
+#		'4tabsql' = paste('-d', '4tabsql', '--url', ENV[['RMSDB_4TABSQL_URL']], '--dbname', ENV[['RMSDB_4TABSQL_DBNAME']], '--user', ENV[['RMSDB_4TABSQL_USER']], '--password', ENV[['RMSDB_4TABSQL_PASSWORD']]),
+#		peakforest = paste('-d peakforest', '--url', PEAKFOREST.URL, '--useragent', paste0('"', USERAGENT, '"')),
+#		NULL)
 }
 
 ##################
@@ -79,7 +109,7 @@ call.search.mz <- function(opt, silent = FALSE) {
 	if (is.null(.g.conn.flag))
 		stop("No connexion flags provided for search-mz.")
 
-	call <- paste(file.path(dirname(script.path), '..', 'search-mz'), .g.conn.flag, paste(c(opt, '--debug'), collapse = ' '))
+	call <- paste(c(file.path(dirname(script.path), '..', 'search-mz'), .g.conn.flag, opt, '--debug'), collapse = ' ')
 	if (silent)
 		call <- paste(call, ">/dev/null", "2>/dev/null")
 
@@ -106,12 +136,12 @@ get.db <- function() {
 set.db <- function(type) {
 
 	.g.db <<- switch(type,
-		peakforest = MsPeakForestDb$new(url = PEAKFOREST.URL, useragent = USERAGENT),
-		'4tabsql' = Ms4TabSql(host = extract.address(ENV[['RMSDB_4TABSQL_URL']]), port = extract.port(ENV[['RMSDB_4TABSQL_URL']]), dbname = ENV[['RMSDB_4TABSQL_DBNAME']], user = ENV[['RMSDB_4TABSQL_USER']], password = ENV[['RMSDB_4TABSQL_PASSWORD']]),
-		file = MsFileDb$new(file = file.path(dirname(script.path), 'filedb.tsv')),
-		file.cust.modes = { db <- MsFileDb$new(file = file.path(dirname(script.path), 'filedb-custmodes.tsv')) ; db$setDbMsModes(c(pos = '+', neg = '-')) ; db },
-		file.cust.cols = { db <- MsFileDb$new(file = file.path(dirname(script.path), 'filedb-custcols.tsv')) ; db$setDbFields(msdb.make.db.fields(c(mz = 'MASS', rt = 'RETTime', col = 'column'))) ; db },
-		xls = MsXlsDb$new(db_dir = file.path(dirname(script.path), 'xlsdb'), cache_dir = file.path(dirname(script.path), 'xlsdb', 'cache')),
+		'peakforestdb' = MsPeakForestDb$new(url = DB[[type]]$url, useragent = DB[[type]]$useragent),
+		'4tabsqldb' = Ms4TabSqlDb$new(host = extract.address(DB[[type]]$url), port = extract.port(DB[[type]]$url), dbname = DB[[type]]$dbname, user = DB[[type]]$user, password = DB[[type]]$password),
+		'filedb' = MsFileDb$new(file = DB[[type]]$url),
+		'filedb-cust-modes' = { db <- MsFileDb$new(file = DB[[type]]$url) ; db$setDbMsModes(DB[[type]]$modes) ; db },
+		'filedb-cust-cols' = { db <- MsFileDb$new(file = DB[[type]]$url) ; db$setDbFields(msdb.make.db.fields(DB[[type]]$fields)) ; db },
+		'xlsdb' = MsXlsDb$new(db_dir = DB[[type]]$url, cache_dir = DB[[type]]$cache_dir),
 		NULL)
 }
 
@@ -124,17 +154,7 @@ options(error = function() { traceback(2) ; q(status = 1) }, warn = 2 )
 opt <- read.args()
 
 # Set db types to test
-dbtypes <- character()
-if (! is.null(opt$filedb) || ! is.null(opt$all))
-	dbtypes <- c(dbtypes, 'file', 'file.cust.modes', 'file.cust.cols')
-if ( ! is.null(opt[['4tabsql']]) || ! is.null(opt$all))
-	dbtypes <- c(dbtypes, '4tabsql')
-if (! is.null(opt$peakforest) || ! is.null(opt$all))
-	dbtypes <- c(dbtypes, 'peakforest')
-if (! is.null(opt$xlsdb) || ! is.null(opt$all))
-	dbtypes <- c(dbtypes, 'xls')
-if (! is.null(opt$zap) && length(dbtypes) > 0)
-	dbtypes <- dbtypes[1]
+dbtypes <- names(DB)[names(DB) %in% names(opt)]
 
 # Define set of functions
 test.fcts = '^(.+\\.)?test\\..+'
