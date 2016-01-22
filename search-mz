@@ -38,16 +38,11 @@ POS_MODE <- 'pos'
 NEG_MODE <- 'neg'
 MSDB.MODE.VALS <- c(POS_MODE, NEG_MODE)
 
-# Authorized mz tolerance unit values
-MZTOLUNIT.PPM <- 'ppm'
-MZTOLUNIT.PLAIN <- 'plain' # same as mz: mass-to-charge ratio
-MSDB.MZTOLUNIT.VALS <- c(MZTOLUNIT.PPM, MZTOLUNIT.PLAIN)
-
 # Default 
 MSDB.DFT <- list()
 MSDB.DFT[['mzshift']] <- 0 # in ppm
 MSDB.DFT[['mzprec']] <- 5 # in ppm
-MSDB.DFT[['mztolunit']] <- MZTOLUNIT.PPM
+MSDB.DFT[['mztolunit']] <- MSDB.MZTOLUNIT.PPM
 MSDB.DFT[['precursor-rt-tol']] <- 5
 MSDB.DFT[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())

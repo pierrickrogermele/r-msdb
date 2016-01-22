@@ -38,6 +38,11 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 	MSDB.MULTIVAL.FIELDS <- c(MSDB.TAG.MOLNAMES)
 	MSDB.MULTIVAL.FIELD.SEP <- ';'
 
+	# Authorized mz tolerance unit values
+	MSDB.MZTOLUNIT.PPM <- 'ppm'
+	MSDB.MZTOLUNIT.PLAIN <- 'plain' # same as mz: mass-to-charge ratio
+	MSDB.MZTOLUNIT.VALS <- c(MSDB.MZTOLUNIT.PPM, MSDB.MZTOLUNIT.PLAIN)
+
 	# Default values
 	MSDB.DFT.PREC <- list()
 	MSDB.DFT.PREC[[MSDB.TAG.POS]] <- c("[(M+H)]+", "[M+H]+", "[(M+Na)]+", "[M+Na]+", "[(M+K)]+", "[M+K]+")
