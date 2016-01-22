@@ -77,27 +77,19 @@ set.conn.flag <- function(type) {
 
 	db <- DB[[type]]
 
-	.g.conn.flag <<- c(.g.conn.flag, '-d', db$type, '--url', db$url)
+	.g.conn.flag <<- c('-d', db$type, '--url', db$url)
 
 	for(field in names(db)) {
-		.g.conn.flag <- switch(field,
+		.g.conn.flag <<- switch(field,
 			useragent = c(.g.conn.flag, '--useragent', paste0('"', db$useragent, '"')),
 			modes = c(.g.conn.flag, '--db-ms-modes', concat.kv.list(db$modes)),
 			fields = c(.g.conn.flag, '--db-fields', concat.kv.list(db$fields)),
 			dbname = c(.g.conn.flag, '--dbname', db$dbname),
 			user = c(.g.conn.flag, '--user', db$user),
-			password = c(.g.conn.flag, '--password', db$password)
+			password = c(.g.conn.flag, '--password', db$password),
+			.g.conn.flag
 		)
 	}
-
-#		switch(type,
-#		file = paste('-d file --url', file.path(dirname(script.path), 'filedb.tsv')),
-#		file.cust.modes = paste('-d file --url', file.path(dirname(script.path), 'filedb-custmodes.tsv'), '--db-ms-modes', 'pos=+,neg=-'),
-#		file.cust.cols = paste('-d file --url', file.path(dirname(script.path), 'filedb-custcols.tsv'), '--db-fields', 'mz=MASS,rt=RETTime,col=column'),
-#		xls = paste('-d xls --url', 'xlsdb'),
-#		'4tabsql' = paste('-d', '4tabsql', '--url', ENV[['RMSDB_4TABSQL_URL']], '--dbname', ENV[['RMSDB_4TABSQL_DBNAME']], '--user', ENV[['RMSDB_4TABSQL_USER']], '--password', ENV[['RMSDB_4TABSQL_PASSWORD']]),
-#		peakforest = paste('-d peakforest', '--url', PEAKFOREST.URL, '--useragent', paste0('"', USERAGENT, '"')),
-#		NULL)
 }
 
 ##################
