@@ -527,6 +527,9 @@ peaks.output <- MsDbOutputDataFrameStream$new(keep.unused = ! is.null(opt[['same
 invisible(db$setInputStream(input.stream))
 db$addOutputStreams(c(main.output, peaks.output))
 
+# Set M/Z tolerance unit
+db$setMzTolUnit(opt$mztolunit)
+
 # Search database
 mode <- if (opt$mode == POS_MODE) MSDB.TAG.POS else MSDB.TAG.NEG
 db$searchForMzRtList(mode = mode, shift = opt$mzshift, prec = opt$mzprec, rt.tol = opt$rttol, rt.tol.x = opt$rttolx, rt.tol.y = opt$rttoly, col = opt$rtcol, precursor.match = ! is.null(opt[['precursor-match']]), precursor.rt.tol = opt[['precursor-rt-tol']])
