@@ -258,7 +258,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# precursor.match   Remove peaks whose molecule precursor peak has not also been matched.
 	# precursor.rt.tol
 	# Returns a data frame, listing m/z values provided in input. Several matches can be found for an m/z value, in which case several lines (the same number as the number of matches found) with the same m/z value repeated will be inserted. The m/z values will be listed in the same order as in the input. The columns of the data.frame are: mz, rt (only if present in the input), id, mztheo, col, colrt, composition, attribution.
-	MsDb$methods( searchForMzRtList = function(x = NULL, mode, shift = 0, prec = 5, col = NULL, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, molids = NULL, molids.rt.tol = NULL, attribs = NULL, precursor.match = FALSE, precursor.rt.tol = NULL, same.cols = FALSE, same.rows = FALSE, peak.table = FALSE) {
+	MsDb$methods( searchForMzRtList = function(x = NULL, mode, shift = NULL, prec = NULL, col = NULL, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, molids = NULL, molids.rt.tol = NULL, attribs = NULL, precursor.match = FALSE, precursor.rt.tol = NULL, same.cols = FALSE, same.rows = FALSE, peak.table = FALSE) {
 
 		# Use provided data frame
 		old.input <- NULL
@@ -336,7 +336,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		}
 	})
 
-	MsDb$methods( .doSearchForMzRtList = function(mode, shift = 0, prec = 5, col = NULL, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, molids = NULL, molids.rt.tol = NULL, attribs = NULL, same.cols = FALSE, same.rows = FALSE, peak.table = FALSE, output.to.stream = TRUE) {
+	MsDb$methods( .doSearchForMzRtList = function(mode, shift = NULL, prec = NULL, col = NULL, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, molids = NULL, molids.rt.tol = NULL, attribs = NULL, same.cols = FALSE, same.rows = FALSE, peak.table = FALSE, output.to.stream = TRUE) {
 
 #		# Choose columns to keep from x
 #		x.cols <- if (same.cols) colnames(x) else intersect(if (is.null(col)) c(x.colnames$mz) else c(x.colnames$mz, x.colnames$rt), colnames(x))
@@ -414,7 +414,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 
 	# rt        Retention time in seconds.
 	# molids    An option vector of molecule IDs, used to restrict the search.
-	MsDb$methods( searchForMzRtTols = function(mode, mz, rt = NULL, shift = 0, prec = 5, col = NULL, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, attribs = NULL, molids = NULL, molids.rt.tol = NULL, colnames = MSDB.DFT.INPUT.FIELDS) {
+	MsDb$methods( searchForMzRtTols = function(mode, mz, rt = NULL, shift = NULL, prec = NULL, col = NULL, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, attribs = NULL, molids = NULL, molids.rt.tol = NULL, colnames = MSDB.DFT.INPUT.FIELDS) {
 
 		# Set retention time bounds
 		rt.low <- NULL
