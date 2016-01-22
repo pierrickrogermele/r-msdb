@@ -52,6 +52,7 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 	MSDB.DFT.MATCH.FIELDS <- list( molids = 'molid', molnames = 'molnames')
 	MSDB.DFT.MATCH.SEP <- ','
 	MSDB.DFT.MODES <- list( pos = 'POS', neg = 'NEG')
+	MSDB.DFT.MZTOLUNIT <- MSDB.MZTOLUNIT.PPM
 
 	############################
 	# GET DEFAULT INPUT FIELDS #

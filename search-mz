@@ -42,7 +42,7 @@ MSDB.MODE.VALS <- c(POS_MODE, NEG_MODE)
 MSDB.DFT <- list()
 MSDB.DFT[['mzshift']] <- 0 # in ppm
 MSDB.DFT[['mzprec']] <- 5 # in ppm
-MSDB.DFT[['mztolunit']] <- MSDB.MZTOLUNIT.PPM
+MSDB.DFT[['mztolunit']] <- MSDB.DFT.MZTOLUNIT
 MSDB.DFT[['precursor-rt-tol']] <- 5
 MSDB.DFT[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())

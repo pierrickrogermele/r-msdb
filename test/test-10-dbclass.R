@@ -156,6 +156,32 @@ test.search.mz <- function() {
 	}
 }
 
+test.search.mz.plain <- function() {
+
+	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
+	mzvals <- sort(mzvals)
+
+	get.db()$setMzTolUnit(MSDB.MZTOLUNIT.PLAIN)
+
+	for (mz in mzvals) {
+		if ( ! is.na(mz)) {
+
+			# Search
+			r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 0.1, shift = 0)
+			checkTrue(nrow(r) >= 1)
+			checkTrue( ! is.na(r[1, MSDB.TAG.MOLID]))
+
+			checkTrue(nrow(get.db()$searchForMzRtList(msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 0.1, shift = 0)) >= 1)
+			checkTrue(nrow(get.db()$searchForMzRtList(msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 1, shift = 0)) >= 1)
+			checkTrue(nrow(get.db()$searchForMzRtList(msdb.make.input.df(mz = c(mz)), mode = MSDB.TAG.POS, prec = 1, shift = 0)) >= 1)
+
+			break
+		}
+	}
+
+	get.db()$setMzTolUnit(MSDB.MZTOLUNIT.PPM)
+}
+
 test.search.mzrt <- function() {
 
 	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)

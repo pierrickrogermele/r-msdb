@@ -9,7 +9,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# CLASS DECLARATION #
 	#####################
 	
-	MsDb <- setRefClass("MsDb", fields = list(.observers = "ANY", .input.fields = "list", .output.fields = "list", .molids.sep = "character", .prec = "list", .output.streams = "ANY", .input.stream = "ANY"))
+	MsDb <- setRefClass("MsDb", fields = list(.observers = "ANY", .input.fields = "list", .output.fields = "list", .molids.sep = "character", .prec = "list", .output.streams = "ANY", .input.stream = "ANY", .mz.tol.unit = "character"))
 	
 	###############
 	# CONSTRUCTOR #
@@ -24,6 +24,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		.output.fields <<- msdb.get.dft.output.fields()
 		.molids.sep <<- MSDB.DFT.MATCH.SEP
 		.prec <<- MSDB.DFT.PREC
+		.mz.tol.unit <<- MSDB.DFT.MZTOLUNIT
 		
 		callSuper(...)
 	})
@@ -160,6 +161,14 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		stop("Method setDbMsModes() not implemented in concrete class.")
 	})
 	
+	MsDb$methods( setMzTolUnit = function(mztolunit) {
+
+		if ( ! mztolunit %in% MSDB.MZTOLUNIT.VALS)
+			stop(paste0("M/Z tolerance unit must be one of: ", paste(MSDB.MZTOLUNIT.VALS, collapse = ', '), "."))
+
+		.mz.tol.unit <<- mztolunit
+	})
+
 	####################
 	# GET MOLECULE IDS #
 	####################
@@ -415,6 +424,16 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# rt        Retention time in seconds.
 	# molids    An option vector of molecule IDs, used to restrict the search.
 	MsDb$methods( searchForMzRtTols = function(mode, mz, rt = NULL, shift = NULL, prec = NULL, col = NULL, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, attribs = NULL, molids = NULL, molids.rt.tol = NULL, colnames = MSDB.DFT.INPUT.FIELDS) {
+
+		# Set M/Z bounds
+		if (.self$.mz.tol.unit == MSDB.MZTOLUNIT.PPM) {
+			mz.low <- mz * (1 + (- shift - prec) * 1e-6)
+			mz.high <- mz * (1 + (- shift + prec) * 1e-6)
+		}
+		else { # PLAIN
+			mz.low <- mz - shift - prec
+			mz.high <- mz - shift + prec
+		}
 
 		# Set retention time bounds
 		rt.low <- NULL
