@@ -80,7 +80,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 	MsFileDb$methods( .init.db = function() {
 
 		if (is.null(.self$.db))
-			.db <<- read.table(.self$.file, sep = "\t", header = TRUE, stringsAsFactors = FALSE, row.names = NULL)
+			.db <<- read.table(.self$.file, sep = "\t", quote = "\"", header = TRUE, stringsAsFactors = FALSE, row.names = NULL)
 	})
 
 	############
