@@ -118,9 +118,9 @@ parse.arg.val <- function(opt) {
 
 	# Parse lists of precursors
 	if ( ! is.null(opt[['pos-prec']]))
-		opt[['pos-prec']] <- split(opt[['pos-prec']], unlist = TRUE)
+		opt[['pos-prec']] <- split.str(opt[['pos-prec']], unlist = TRUE)
 	if ( ! is.null(opt[['neg-prec']]))
-		opt[['neg-prec']] <- split(opt[['neg-prec']], unlist = TRUE)
+		opt[['neg-prec']] <- split.str(opt[['neg-prec']], unlist = TRUE)
 
 	return(opt)
 }

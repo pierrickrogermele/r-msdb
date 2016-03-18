@@ -240,7 +240,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 			# Loop on all 
 			for(i in seq(db[[.self$.fields[[MSDB.TAG.MOLID]]]])) {
 				i.id <- db[i, .self$.fields[[MSDB.TAG.MOLID]]]
-				i.names <- split(db[i, .self$.fields[[MSDB.TAG.MOLNAMES]]], ';', unlist = TRUE)
+				i.names <- split.str(db[i, .self$.fields[[MSDB.TAG.MOLNAMES]]], ';', unlist = TRUE)
 				.name.to.id <<- rbind(.self$.name.to.id, data.frame(name = toupper(i.names), id = rep(i.id, length(i.names)), stringsAsFactors = FALSE))
 			}
 
