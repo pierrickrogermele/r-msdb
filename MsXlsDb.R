@@ -2,7 +2,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 
 	library('methods')
 	library('stringr')
-	source('common.R')
+	source('msdb-common.R')
 	source('MsDb.R')
 	source('../r-lib/strhlp.R', chdir = TRUE)
 	source('../r-lib/search.R', chdir = TRUE)

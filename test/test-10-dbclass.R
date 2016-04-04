@@ -1,6 +1,6 @@
 source(file.path(dirname(script.path), '..', 'MsDbInputDataFrameStream.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'MsDbOutputDataFrameStream.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '..', 'common.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', 'msdb-common.R'), chdir = TRUE)
 
 test.10.all.mol.ids <- function() {
 	molids <- get.db()$getMoleculeIds()

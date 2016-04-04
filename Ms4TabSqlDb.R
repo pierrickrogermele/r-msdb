@@ -1,7 +1,7 @@
 if ( ! exists('Ms4TabSqlDb')) { # Do not load again if already loaded
 
 	library('methods')
-	source('common.R')
+	source('msdb-common.R')
 	source('MsDb.R')
 	
 	#####################

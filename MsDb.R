@@ -1,7 +1,7 @@
 if ( ! exists('MsDb')) { # Do not load again if already loaded
 	
 	library('methods')
-	source('common.R')
+	source('msdb-common.R')
 	source('MsDbObserver.R')
 	source('MsDbOutputStream.R')
 

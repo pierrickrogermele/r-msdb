@@ -1,7 +1,7 @@
 if ( ! exists('MsDbInputStream')) { # Do not load again if already loaded
 
 	library('methods')
-	source('common.R')
+	source('msdb-common.R')
 
 	#####################
 	# CLASS DECLARATION #
