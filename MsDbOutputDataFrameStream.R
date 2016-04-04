@@ -62,11 +62,11 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 
 						# Keep only first value in multi-value fields
 						if (.self$.first.val)
-							peaks[[c]] <- vapply(peaks[[c]], function(s) split(s, sep = MSDB.MULTIVAL.FIELD.SEP, unlist = TRUE)[[1]], FUN.VALUE = '')
+							peaks[[c]] <- vapply(peaks[[c]], function(s) split.str(s, sep = MSDB.MULTIVAL.FIELD.SEP, unlist = TRUE)[[1]], FUN.VALUE = '')
 
 						# Change separator
 						else
-							peaks[[c]] <- vapply(peaks[[c]], function(s) paste0(split(s, sep = MSDB.MULTIVAL.FIELD.SEP, unlist = TRUE), collapse = .self$.multval.field.sep), FUN.VALUE = '')
+							peaks[[c]] <- vapply(peaks[[c]], function(s) paste0(split.str(s, sep = MSDB.MULTIVAL.FIELD.SEP, unlist = TRUE), collapse = .self$.multval.field.sep), FUN.VALUE = '')
 
 					}
 
