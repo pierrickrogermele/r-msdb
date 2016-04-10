@@ -96,12 +96,21 @@ set.conn.flag <- function(type) {
 # CALL SEARCH MZ #
 ##################
 
-call.search.mz <- function(opt, silent = FALSE) {
+call.search.mz <- function(opt, silent = FALSE, use.global.conn.flags = TRUE) {
 
-	if (is.null(.g.conn.flag))
+	if (use.global.conn.flags && is.null(.g.conn.flag))
 		stop("No connexion flags provided for search-mz.")
 
-	call <- paste(c(file.path(dirname(script.path), '..', 'search-mz'), .g.conn.flag, opt, '--debug'), collapse = ' ')
+	# Set program path
+	prog <- file.path(dirname(script.path), '..', 'search-mz')
+
+	# Set arguments
+	args <- c(opt, '--debug')
+	if (use.global.conn.flags)
+		args <- c(args, .g.conn.flag)
+
+	# Call program
+	call <- paste(c(prog, args), collapse = ' ')
 	if (silent)
 		call <- paste(call, ">/dev/null", "2>/dev/null")
 
@@ -167,3 +176,8 @@ for (type in dbtypes) {
 	print(test.results)
 #	printTextProtocol(test.results, showDetails = FALSE)
 }
+
+test.suite <- defineTestSuite('msdb', dirname(script.path), testFileRegexp = '^test-.+\\.R$', testFuncRegexp = '^test\\.searchmz\\.ticket\\..+$')
+isValidTestSuite(test.suite)
+test.results <- runTestSuite(test.suite)
+print(test.results)
