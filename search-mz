@@ -14,10 +14,7 @@ source(file.path(dirname(script.path), 'MsDbOutputDataFrameStream.R'), chdir = T
 source(file.path(dirname(script.path), '../r-lib/htmlhlp.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '../r-lib/strhlp.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '../r-lib/fshlp.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-biodb/KeggConn.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-biodb/HmdbConn.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-biodb/ChebiConn.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-biodb/PubchemConn.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-biodb/biodb-common.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
 
 #############
@@ -392,7 +389,7 @@ output.html <- function(db, main, peaks, file, opt) {
 		for (extdb in c('kegg', 'hmdb', 'chebi', 'pubchem')) {
 			field <- db$getOutputFields()[[extdb]]
 			if (field %in% colnames(peaks))
-				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', switch(extdb, kegg = get.kegg.entry.url(id), hmdb = get.hmdb.entry.url(id), chebi = get.chebi.entry.url(id), pubchem = get.pubchem.entry.url(id)), '">', id, '</a>'), FUN.VALUE = '')
+				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb, accession = id, content.type = RBIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
 		}
 
 	# Write HTML
