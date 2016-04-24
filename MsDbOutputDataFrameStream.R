@@ -15,11 +15,11 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 	# CONSTRUCTOR #
 	###############
 	
-	MsDbOutputDataFrameStream$methods( initialize = function(keep.unused = FALSE, one.line = FALSE, match.sep = MSDB.DFT.MATCH.SEP, match.fields = MSDB.DFT.MATCH.FIELDS, output.fields = msdb.get.dft.output.fields(), multval.field.sep = MSDB.DFT.OUTPUT.MULTIVAL.FIELD.SEP, first.val = FALSE, ascii = FALSE, noapostrophe = FALSE, noplusminus = FALSE, nogreek = FALSE, ...) {
+	MsDbOutputDataFrameStream$methods( initialize = function(keep.unused = FALSE, one.line = FALSE, match.sep = MSDB.DFT.MATCH.SEP, output.fields = msdb.get.dft.output.fields(), multval.field.sep = MSDB.DFT.OUTPUT.MULTIVAL.FIELD.SEP, first.val = FALSE, ascii = FALSE, noapostrophe = FALSE, noplusminus = FALSE, nogreek = FALSE, ...) {
 
 		.df <<- data.frame()
 		
-		callSuper(keep.unused = keep.unused, one.line = one.line, match.sep = match.sep, match.fields = match.fields, output.fields = output.fields, multval.field.sep = multval.field.sep, first.val = first.val, ascii = ascii, noapostrophe = noapostrophe, noplusminus = noplusminus, nogreek = nogreek, ...)
+		callSuper(keep.unused = keep.unused, one.line = one.line, match.sep = match.sep, output.fields = output.fields, multval.field.sep = multval.field.sep, first.val = first.val, ascii = ascii, noapostrophe = noapostrophe, noplusminus = noplusminus, nogreek = nogreek, ...)
 	})
 
 	##################
@@ -72,9 +72,6 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 
 				# Concatenate results in one line
 				if (.self$.one.line) {
-#					peaks <- peaks[, unlist(.self$.output.fields[unlist(.self$.match.fields)])]
-#					colnames(peaks) <- names(.self$.match.fields) # Rename columns
-
  					# For each column, concatenate all values in one string.
 					for (c in seq(peaks))
 						peaks[1, c] <- paste0(peaks[[c]], collapse = .self$.match.sep, FUN.VALUE = '')
@@ -90,8 +87,9 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 		x <- rename.col(x, names(.self$.output.fields), .self$.output.fields)
 
 		# Add unused columns
-		if ( .self$.keep.unused && ! is.null(unused))
+		if ( .self$.keep.unused && ! is.null(unused)) {
 			x <- cbind(x, unused, row.names = NULL)
+		}
 
 		# Convert strings to ASCII
 		if (.self$.ascii || .self$.noapostrophe || .self$.noplusminus || .self$.nogreek)
