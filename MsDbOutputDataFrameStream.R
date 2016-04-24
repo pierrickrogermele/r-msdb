@@ -72,8 +72,8 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 
 				# Concatenate results in one line
 				if (.self$.one.line) {
-					peaks <- peaks[, unlist(.self$.output.fields[unlist(.self$.match.fields)])]
-					colnames(peaks) <- names(.self$.match.fields) # Rename columns
+#					peaks <- peaks[, unlist(.self$.output.fields[unlist(.self$.match.fields)])]
+#					colnames(peaks) <- names(.self$.match.fields) # Rename columns
 
  					# For each column, concatenate all values in one string.
 					for (c in seq(peaks))
