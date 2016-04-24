@@ -56,7 +56,7 @@ if ( ! exists('MsDbInputDataFrameStream')) { # Do not load again if already load
 			vals <- .self$.df[.self$.i, , drop = FALSE]
 
 			if ( ! is.null(but))
-				vals <- vals[, ! colnames(vals) %in% .self$.input.fields[but]]
+				vals <- vals[, ! colnames(vals) %in% .self$.input.fields[but], drop = FALSE]
 
 			return(vals)
 		}
