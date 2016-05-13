@@ -9,7 +9,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# CLASS DECLARATION #
 	#####################
 	
-	MsDb <- setRefClass("MsDb", fields = list(.observers = "ANY", .input.fields = "list", .output.fields = "list", .molids.sep = "character", .prec = "list", .output.streams = "ANY", .input.stream = "ANY", .mz.tol.unit = "character"))
+	MsDb <- setRefClass("MsDb", fields = list(.observers = "ANY", .output.fields = "list", .molids.sep = "character", .prec = "list", .output.streams = "ANY", .input.stream = "ANY", .mz.tol.unit = "character"))
 	
 	###############
 	# CONSTRUCTOR #
@@ -20,7 +20,6 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		.observers <<- NULL
 		.output.streams <<- NULL
 		.input.stream <<- NULL
-		.input.fields <<- msdb.get.dft.input.fields()
 		.output.fields <<- msdb.get.dft.output.fields()
 		.molids.sep <<- MSDB.DFT.MATCH.SEP
 		.prec <<- MSDB.DFT.PREC
@@ -95,14 +94,6 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	
 		# Add observers to current list
 		.observers <<- if (is.null(.self$.observers)) c(obs) else c(.self$.observers, obs)
-	})
-	
-	####################
-	# SET INPUT FIELDS #
-	####################
-	
-	MsDb$methods( setInputFields = function(fields) {
-		.input.fields <<- as.list(fields)
 	})
 	
 	#####################
