@@ -177,7 +177,9 @@ for (type in dbtypes) {
 #	printTextProtocol(test.results, showDetails = FALSE)
 }
 
-test.suite <- defineTestSuite('msdb', dirname(script.path), testFileRegexp = '^test-.+\\.R$', testFuncRegexp = '^test\\.searchmz\\.ticket\\..+$')
-isValidTestSuite(test.suite)
-test.results <- runTestSuite(test.suite)
-print(test.results)
+if (is.null(opt$name)) {
+	test.suite <- defineTestSuite('msdb', dirname(script.path), testFileRegexp = '^test-.+\\.R$', testFuncRegexp = '^test\\.searchmz\\.ticket\\..+$')
+	isValidTestSuite(test.suite)
+	test.results <- runTestSuite(test.suite)
+	print(test.results)
+}
