@@ -35,12 +35,13 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 	# CONSTRUCTOR #
 	###############
 	
-	MsXlsDb$methods( initialize = function(db_dir = NA_character_, limit = NA_integer_, cache_dir = NA_character_, ...) {
+	MsXlsDb$methods( initialize = function(db_dir = NA_character_, limit = NA_integer_, cache_dir = NA_character_, cache = FALSE, ...) {
 
 		# Initialize members
 		.db_dir <<- if ( ! is.null(db_dir)) db_dir else NA_character_
 		.limit <<- if ( ! is.null(limit) && ! is.na(limit) && limit > 0) limit else NA_integer_
-		.cache_dir <<- if ( ! is.null(cache_dir)) cache_dir else NA_character_
+		cache_dir <- if (cache && is.na(cache_dir) && ! is.na(db_dir)) file.path(db_dir, 'cache') else cache_dir
+		.cache_dir <<- if ( cache || ! is.null(cache_dir)) cache_dir else NA_character_
 		.files <<- NULL
 		.db <<- NULL
 		.mz.index <<- NULL
@@ -130,13 +131,14 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 			id <- NA_integer_
 
 			if ( ! is.na(n)) {
+
 				# Get index
-				index <- .self$.get_name_index()
+				index <- .self$.get.name.index()
 
 				# Search for name in index
 				i <- binary.search(toupper(n), index[['name']])
 
-				id <- if (is.na(i)) NA_integer_ else index[i, .self$.output.fields$molid]
+				id <- if (is.na(i)) NA_integer_ else index[i, 'id']
 			}
 
 			ids <- c(ids, id)
@@ -480,7 +482,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 	##################
 	
 	# Get name index.
-	MsXlsDb$methods( .get_name_index = function() {
+	MsXlsDb$methods( .get.name.index = function() {
 	
 		if (is.null(.self$.name_index)) {
 	
