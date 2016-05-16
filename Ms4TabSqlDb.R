@@ -269,7 +269,7 @@ if ( ! exists('Ms4TabSqlDb')) { # Do not load again if already loaded
 	Ms4TabSqlDb$methods( getMzValues = function(mode = NULL) {
 
 		# Build request
-		select <- paste0("select distinct pk.mass as ", .self$.output.fields$mztheo)
+		select <- paste0("select distinct pk.mass as ", MSDB.TAG.MZTHEO)
 		from <- " from peaklist as pk"
 		where <- ""
 		if ( ! is.null(mode))
@@ -282,7 +282,7 @@ if ( ! exists('Ms4TabSqlDb')) { # Do not load again if already loaded
 		rs <- .self$.send.query(request)
 		df <- fetch(rs, n=-1)
 
-		return(df[[.self$.output.fields$mztheo]])
+		return(df[[MSDB.TAG.MZTHEO]])
 	})
 
 	##########
@@ -292,7 +292,7 @@ if ( ! exists('Ms4TabSqlDb')) { # Do not load again if already loaded
 	Ms4TabSqlDb$methods( .do.search.for.mz.rt.bounds = function(mode, mz.low, mz.high, rt.low = NULL, rt.high = NULL, col = NULL, attribs = NULL, molids = NULL) {
 
 		# Build request
-		select <- paste0("select pkmol.molecule_id as id, pk.mass as ", .self$.output.fields$mztheo, ", pk.composition as ", .self$.output.fields$comp,", pk.attribution as ", .self$.output.fields$attr)
+		select <- paste0("select pkmol.molecule_id as ", MSDB.TAG.MOLID, ", pkmol.name as ", MSDB.TAG.MOLNAMES,", pk.mass as ", MSDB.TAG.MZTHEO, ", pk.composition as ", MSDB.TAG.COMP,", pk.attribution as ", MSDB.TAG.ATTR)
 		from <- " from peaklist as pk, peaklist_name as pkmol"
 		where <- paste0(" where pkmol.id = pk.name_id and pk.mass >= ", mz.low, " and pk.mass <= ", mz.high)
 		where <- paste0(where, ' and ', if (mode == MSDB.TAG.POS) '' else 'not ', 'pk.ion_pos')
@@ -316,9 +316,9 @@ if ( ! exists('Ms4TabSqlDb')) { # Do not load again if already loaded
 
 				# Can't find specified columns
 				if (length(dbcols) == 0 && length(col) > 0)
-					return(data.frame())
+					return(.get.empty.result.df(rt = TRUE))
 
-				select <- paste0(select, ", (60 * pkret.retention) as colrt, method.name as col")
+				select <- paste0(select, ", (60 * pkret.retention) as ", MSDB.TAG.COLRT, ", method.name as ", MSDB.TAG.COL)
 				from <- paste0(from, ", method, peaklist_ret as pkret")
 				where.cols <- if (length(dbcols) == 0) 'TRUE' else paste0(vapply(dbcols, function(c) paste0("method.name = '", c, "'"), FUN.VALUE = '', USE.NAMES = FALSE), collapse = " or ")
 				where <- paste0(where, " and pk.id = pkret.id_peak and pkret.id_method = method.id and (", where.cols, ")")
@@ -334,8 +334,13 @@ if ( ! exists('Ms4TabSqlDb')) { # Do not load again if already loaded
 		rs <- .self$.send.query(request)
 		df <- fetch(rs,n=-1)
 
-		# Convert IDs to integers
-		df[['id']] <- vapply(df[['id']], function(x) as.integer(substring(x, 2)), FUN.VALUE = 1, USE.NAMES = FALSE)
+		# No results
+
+		# Remove N prefix from IDs
+		if (nrow(df) > 0)
+			df[[MSDB.TAG.MOLID]] <- vapply(df[[MSDB.TAG.MOLID]], function(x) substring(x, 2), FUN.VALUE = '', USE.NAMES = FALSE)
+		else if (nrow(df) == 0)
+			df <- .get.empty.result.df(rt = ! is.null(col))
 
 		return(df)
 	})

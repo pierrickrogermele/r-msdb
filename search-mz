@@ -185,9 +185,9 @@ make.getopt.spec <- function() {
 		'url',              NA_character_,  1,  'character',    'URL of database. For "peakforest" database it is the HTTP URL, for the "xls" database it is the path to the directory containing the Excel files, for the "file" database it is the path to the file database and for the "4tabsql" database it is the IP address of the server.',
 		'cache-dir',        NA_character_,  1,  'character',    'Path to directory where to store cache files. Only used when database flag is set to "xls".',
 		'useragent',        NA_character_,  1,  'character',    'User agent. Used by the "Peakforest" database.',
-		'dbname',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
-		'user',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
-		'password',      NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
+		'db-name',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
+		'db-user',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
+		'db-password',      NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
 		'db-fields',        NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the field names to be used in the single file database (option --db-file). Default is "', MSDB.DFT[['db-fields']], '".'),
 		'db-ms-modes',      NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the MS modes to be used in the single file database (option --db-file). Default is "', MSDB.DFT[['db-ms-modes']], '".'),
 		'debug',            NA_character_,  0,  'logical',      'Set debug mode.'
@@ -362,7 +362,7 @@ read_args <- function() {
 		db <- switch(opt$database,
 		             peakforest = MsPeakForestDb$new(url = opt$url, useragent = opt$useragent),
 		             xls = MsXlsDb(db_dir = opt$url, cache_dir = opt[['cache-dir']]),
-		             '4tabsql' = Ms4TabSql(host = extract.address(opt$url), port = extract.port(opt$url), dbname = opt$dbname, user = opt$user, password = opt$password),
+		             '4tabsql' = Ms4TabSqlDb(host = extract.address(opt$url), port = extract.port(opt$url), dbname = opt[['db-name']], user = opt[['db-user']], password = opt[['db-password']]),
 		             file = MsFileDb(file = opt$url),
 		             NULL)
 		db$setPrecursors(precursors)

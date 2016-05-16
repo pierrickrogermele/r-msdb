@@ -142,6 +142,28 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 		return(x)
 	}
 
+	###############################
+	# GET EMPTY RESULT DATA FRAME #
+	###############################
+
+	.get.empty.result.df <- function(rt = FALSE) {
+
+		df <- data.frame(stringsAsFactors = FALSE)
+		df[MSDB.TAG.MOLID] <- character()
+ 		df[MSDB.TAG.MOLNAMES] <- character()
+ 		df[MSDB.TAG.MZ] <- numeric()
+ 		df[MSDB.TAG.MZTHEO] <- numeric()
+ 		df[MSDB.TAG.ATTR] <- character()
+ 		df[MSDB.TAG.COMP] <- character()
+		if (rt) {
+ 			df[MSDB.TAG.RT] <- numeric()
+ 			df[MSDB.TAG.COL] <- character()
+ 			df[MSDB.TAG.COLRT] <- numeric()
+		}
+
+		return(df)
+	}
+
 	############################
 	# PARSE COLUMN DESCRIPTION #
 	############################

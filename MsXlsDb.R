@@ -308,7 +308,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 		
 					# Set default data frame (important for cache file writing, because we need a correct header to be written in order for loading)
 					else {
-						peak_df <- data.frame()
+						peak_df <- data.frame(stringsAsFactors = FALSE)
 						peak_df[MSDB.TAG.MZEXP] <- numeric()
  				   		peak_df[MSDB.TAG.MZTHEO] <- numeric()
  				   		peak_df[MSDB.TAG.INT] <- numeric()
