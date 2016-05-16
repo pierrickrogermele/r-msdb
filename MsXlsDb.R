@@ -255,7 +255,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 		# Get all mz values of all molecules
 		for(molid in .self$getMoleculeIds())
 			for (m in (if (is.null(mode) || is.na(mode)) c(MSDB.TAG.POS, MSDB.TAG.NEG) else mode))
-				mz <- c(mz, .self$.get.peaks(molid, m)[[.self$.output.fields$mztheo]])
+				mz <- c(mz, .self$.get.peaks(molid, m)[[MSDB.TAG.MZTHEO]])
 
 		# Remove duplicated
 		mz <- mz[ ! duplicated(mz)]
@@ -303,18 +303,18 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 					# Instantiate peaks
 					if ( ! is.null(peaks) && nrow(peaks) > 0) {
 						peak_df <- peaks[1:length(peaks[[.XLS_MZ_COL]]), c(.XLS_MZ_COL, .XLS_THEORETICAL_MZ_COL, .XLS_INTENSITY_COL, .XLS_RELATIVE_COL, .XLS_COMPOSITION_COL, .XLS_ATTRIBUTION_COL), drop = FALSE]
-						colnames(peak_df) <- c(.self$.output.fields$mzexp, .self$.output.fields$mztheo, .self$.output.fields$int, .self$.output.fields$rel, .self$.output.fields$comp, .self$.output.fields$attr)
+						colnames(peak_df) <- c(MSDB.TAG.MZEXP, MSDB.TAG.MZTHEO, MSDB.TAG.INT, MSDB.TAG.REL, MSDB.TAG.COMP, MSDB.TAG.ATTR)
 					}
 		
 					# Set default data frame (important for cache file writing, because we need a correct header to be written in order for loading)
 					else {
 						peak_df <- data.frame()
-						peak_df[.self$.output.fields$mzexp] <- numeric()
- 				   		peak_df[.self$.output.fields$mztheo] <- numeric()
- 				   		peak_df[.self$.output.fields$int] <- numeric()
- 				   		peak_df[.self$.output.fields$rel] <- numeric()
- 				   		peak_df[.self$.output.fields$comp] <- character()
- 				   		peak_df[.self$.output.fields$attr] <- character()
+						peak_df[MSDB.TAG.MZEXP] <- numeric()
+ 				   		peak_df[MSDB.TAG.MZTHEO] <- numeric()
+ 				   		peak_df[MSDB.TAG.INT] <- numeric()
+ 				   		peak_df[MSDB.TAG.REL] <- numeric()
+ 				   		peak_df[MSDB.TAG.COMP] <- character()
+ 				   		peak_df[MSDB.TAG.ATTR] <- character()
 					}
 
 					if (is.null(peak_df)) peak_df <- data.frame()
@@ -350,10 +350,10 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 	
 			# Initialize data frame
 			mzi <- data.frame(stringsAsFactors = FALSE)
-			mzi[.self$.output.fields$mztheo] <- numeric()
-			mzi[.self$.output.fields$molid] <- integer()
-			mzi[.self$.output.fields$attr] <- character()
-			mzi[.self$.output.fields$comp] <- character()
+			mzi[MSDB.TAG.MZTHEO]    <- numeric()
+			mzi[MSDB.TAG.MOLID]     <- character()
+			mzi[MSDB.TAG.COMP]      <- character()
+			mzi[MSDB.TAG.ATTR]      <- character()
 
 			# Loop on all molecules
 			for(molid in .self$getMoleculeIds()) {
@@ -362,12 +362,12 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 				peaks <- .self$.get.peaks(molid, mode)
 
 				# Remove rows whose mz is NA.
-				peaks <- peaks[ ! is.na(peaks[[.self$.output.fields$mztheo]]), ]
+				peaks <- peaks[ ! is.na(peaks[[MSDB.TAG.MZTHEO]]), ]
 
 				if (nrow(peaks) > 0) {
 
 					# Add id column
-					peaks[.self$.output.fields$molid] <- molid
+					peaks[MSDB.TAG.MOLID] <- molid
 
 					# Append peaks
 					r <- nrow(mzi) + 1
@@ -377,7 +377,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 			}
 	
 			# Sort by M/Z
-			sorted_indices <- order(mzi[[.self$.output.fields$mztheo]])
+			sorted_indices <- order(mzi[[MSDB.TAG.MZTHEO]])
 	
 			# Group in a data frame
 			.self$.mz.index[[mode]] <- mzi[sorted_indices, ]
@@ -397,22 +397,22 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 
 		# Filter on attributions
 		if ( ! is.null(attribs)) {
-			results <- results[results[[.self$.output.fields$attr]] %in% attribs, ]
+			results <- results[results[[MSDB.TAG.ATTR]] %in% attribs, ]
 		}
 
 		# Filer on molecule IDs
 		if ( ! is.null(molids)) {
-			results <- results[results[[.self$.output.fields$molid]] %in% molids, ]
+			results <- results[results[[MSDB.TAG.MOLID]] %in% molids, ]
 		}
 
 		# Use retention time
 		if ( ! is.null(col) && ! is.null(rt.low) && ! is.null(rt.high)) {
 
 			# Get list of unique IDs
-			ids <- results[[.self$.output.fields$molid]]
+			ids <- results[[MSDB.TAG.MOLID]]
 			ids <- ids[ ! duplicated(ids)]
 			rt <- .self$.search.for.rt(mols = ids, rt.low = rt.low, rt.high = rt.high, col = col)
-			results <- results[results[[.self$.output.fields$molid]] %in% rt[[.self$.output.fields$molid]], ]
+			results <- results[results[[MSDB.TAG.MOLID]] %in% rt[[MSDB.TAG.MOLID]], ]
 			results <- merge(results, rt)
 		}
 
@@ -425,14 +425,19 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 
 	MsXlsDb$methods( .do.search.for.mz = function(mode, mz.low, mz.high) {
 	
-		results <- data.frame(mz = numeric(), id = integer(), attr = character())
+		results <- data.frame(stringsAsFactors = FALSE)
+		results[MSDB.TAG.MZTHEO]    <- numeric()
+		results[MSDB.TAG.MOLID]     <- character()
+		results[MSDB.TAG.MOLNAMES]  <- character()
+		results[MSDB.TAG.COMP]      <- character()
+		results[MSDB.TAG.ATTR]      <- character()
 
 		# Create m/z index
 		mz_index <- .self$.get.mz.index(mode)
 	
 		# Find molecules
-		low_bound <- binary.search(mz.low, mz_index[[.self$.output.fields$mztheo]], lower = FALSE)
-		high_bound <- binary.search(mz.high, mz_index[[.self$.output.fields$mztheo]], lower = TRUE)
+		low_bound <- binary.search(mz.low, mz_index[[MSDB.TAG.MZTHEO]], lower = FALSE)
+		high_bound <- binary.search(mz.high, mz_index[[MSDB.TAG.MZTHEO]], lower = TRUE)
 
 		# Get results
 		if ( ! is.na(high_bound) && ! is.na(low_bound) && low_bound <= high_bound)
@@ -775,7 +780,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 
 			if (no.col) {
 				r <- nrow(results) + 1
-				results[r, c(.self$.output.fields$molid)] <- c(id = molid)
+				results[r, c(MSDB.TAG.MOLID)] <- c(id = molid)
 			}
 		}
 
