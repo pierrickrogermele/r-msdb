@@ -379,12 +379,12 @@ read_args <- function() {
 # OUTPUT HTML #
 ###############
 
-output.html <- function(db, main, peaks, file, opt) {
+output.html <- function(db, main, peaks, file, opt, output.fields) {
 
 	# Replace public database IDs by URLs
 	if ( ! is.null(peaks))
-		for (extdb in c('kegg', 'hmdb', 'chebi', 'pubchem')) {
-			field <- db$getOutputFields()[[extdb]]
+		for (extdb in c(MSDB.TAG.KEGG, MSDB.TAG.HMDB, MSDB.TAG.CHEBI, MSDB.TAG.PUBCHEM)) {
+			field <- output.fields[[extdb]]
 			if (field %in% colnames(peaks))
 				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb, accession = id, content.type = RBIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
 		}
@@ -529,8 +529,11 @@ mode <- if (opt$mode == POS_MODE) MSDB.TAG.POS else MSDB.TAG.NEG
 db$searchForMzRtList(mode = mode, shift = opt$mzshift, prec = opt$mzprec, rt.tol = opt$rttol, rt.tol.x = opt$rttolx, rt.tol.y = opt$rttoly, col = opt$rtcol, precursor.match = ! is.null(opt[['precursor-match']]), precursor.rt.tol = opt[['precursor-rt-tol']])
 
 # Write output
+# TODO Create a class MsDbOutputCsvFileStream
 df.write.tsv(main.output$getDataFrame(), file = opt[['output-file']], row.names = FALSE)
 if ( ! is.null(opt[['peak-output-file']]))
+	# TODO Create a class MsDbOutputCsvFileStream
 	df.write.tsv(peaks.output$getDataFrame(), file = opt[['peak-output-file']], row.names = FALSE)
 if ( ! is.null(opt[['html-output-file']]))
-	output.html(db = db, main = main.output$getDataFrame(), peaks = peaks.output$getDataFrame(), file = opt[['html-output-file']], opt = opt)
+	# TODO Create a class MsDbOutputHtmlFileStream
+	output.html(db = db, main = main.output$getDataFrame(), peaks = peaks.output$getDataFrame(), file = opt[['html-output-file']], opt = opt, output.fields = opt[['output-col-names']])

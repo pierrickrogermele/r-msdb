@@ -55,7 +55,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 
 		# Check that field values are real columns inside the database
 		.self$.init.db()
-		db.col.names <- vapply(fields, function(s) .self$.fields[[s]], FUN.VALUE = '')
+		db.col.names <- fields #vapply(fields, function(s) .self$.fields[[s]], FUN.VALUE = '')
 		unknown.cols <- db.col.names[ ! db.col.names %in% colnames(.self$.db)]
 		if (length(unknown.cols) > 0)
 			stop(paste0("Column", if (length(unknown.cols) == 1) "" else "s", " \"", paste(unknown.cols, collapse = ", "), "\" ", if (length(unknown.cols) == 1) "is" else "are", " not defined inside the database \"", .self$.file, "\"."))
@@ -79,8 +79,14 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 
 	MsFileDb$methods( .init.db = function() {
 
-		if (is.null(.self$.db))
+		if (is.null(.self$.db)) {
+
+			# Load database
 			.db <<- read.table(.self$.file, sep = "\t", quote = "\"", header = TRUE, stringsAsFactors = FALSE, row.names = NULL)
+
+			# Rename columns
+			colnames(.self$.db) <- vapply(colnames(.self$.db), function(c) if (c %in% .self$.fields) names(.self$.fields)[.self$.fields %in% c] else c, FUN.VALUE = '')
+		}
 	})
 
 	############
@@ -99,9 +105,9 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 		.self$.check.fields(col)
 
 		# Get database columns
-		db.cols <- unlist(.self$.fields[col])
+#		db.cols <- unlist(.self$.fields[col])
 
-		return(db[, db.cols])
+		return(db[, col])
 	})
 
 	###########
@@ -118,7 +124,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 			.self$.check.fields(cols)
 
 		if ( ! is.null(cols)) {
-			cols <- vapply(cols, function(c) .self$.fields[[c]], FUN.VALUE = '')
+			#cols <- vapply(cols, function(c) .self$.fields[[c]], FUN.VALUE = '')
 			return(.self$.db[row, cols])
 		}
 
@@ -137,7 +143,8 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 		# Check fields
 		.self$.check.fields(col)
 
-		return(.self$.db[[.self$.fields[[col]]]])
+		#return(.self$.db[[.self$.fields[[col]]]])
+		return(.self$.db[[col]])
 	})
 
 	####################
@@ -184,7 +191,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 			return(NA_character_)
 
 		# Get names
-		names <- db[db[[.self$.fields[[MSDB.TAG.MOLID]]]] %in% id, .self$.fields[[MSDB.TAG.MOLNAMES]]]
+		names <- db[db[[MSDB.TAG.MOLID]] %in% id, MSDB.TAG.MOLNAMES]
 		if (length(names) == 0)
 			return(NA_character_)
 
@@ -206,10 +213,10 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 		.self$.init.db()
 
 		# Get database
-		db <- .self$.db[, c(.self$.fields[[MSDB.TAG.MOLID]], .self$.fields[[MSDB.TAG.MOLNAMES]])]
+		db <- .self$.db[, c(MSDB.TAG.MOLID, MSDB.TAG.MOLNAMES)]
 
 		# Remove duplicates
-		db <- db[! duplicated(db[[.self$.fields[[MSDB.TAG.MOLID]]]]), ]
+		db <- db[! duplicated(db[[MSDB.TAG.MOLID]]), ]
 
 		# Look for ids
 		names <- vapply(molid, function(i) .self$.get.name.from.id(db, i), FUN.VALUE = '')
@@ -232,15 +239,15 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 			.self$.init.db()
 
 			# Get database subset (columns name and id only).
-			db <- .self$.db[, c(.self$.fields[[MSDB.TAG.MOLID]], .self$.fields[[MSDB.TAG.MOLNAMES]])]
+			db <- .self$.db[, c(MSDB.TAG.MOLID, MSDB.TAG.MOLNAMES)]
 
 			# Remove duplicate IDs
-			db <- db[! duplicated(db[[.self$.fields[[MSDB.TAG.MOLID]]]]), ]
+			db <- db[! duplicated(db[[MSDB.TAG.MOLID]]), ]
 
 			# Loop on all 
-			for(i in seq(db[[.self$.fields[[MSDB.TAG.MOLID]]]])) {
-				i.id <- db[i, .self$.fields[[MSDB.TAG.MOLID]]]
-				i.names <- split.str(db[i, .self$.fields[[MSDB.TAG.MOLNAMES]]], ';', unlist = TRUE)
+			for(i in seq(db[[MSDB.TAG.MOLID]])) {
+				i.id <- db[i, MSDB.TAG.MOLID]
+				i.names <- split.str(db[i, MSDB.TAG.MOLNAMES], ';', unlist = TRUE)
 				.name.to.id <<- rbind(.self$.name.to.id, data.frame(name = toupper(i.names), id = rep(i.id, length(i.names)), stringsAsFactors = FALSE))
 			}
 
@@ -297,14 +304,14 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 		.self$.init.db()
 
 		# Get database
-		db <- .self$.db[, c(.self$.fields[[MSDB.TAG.MOLID]], .self$.fields[[MSDB.TAG.COL]])]
+		db <- .self$.db[, c(MSDB.TAG.MOLID, MSDB.TAG.COL)]
 
 		# Filter on molecule IDs
 		if ( ! is.null(molid))
-			db <- db[db[[.self$.fields[[MSDB.TAG.MOLID]]]] %in% molid,]
+			db <- db[db[[MSDB.TAG.MOLID]] %in% molid,]
 
 		# Get column names
-		cols <- db[[.self$.fields[[MSDB.TAG.COL]]]]
+		cols <- db[[MSDB.TAG.COL]]
 
 		# Remove duplicates
 		cols <- cols[ ! duplicated(cols)]
@@ -328,18 +335,18 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 		.self$.init.db()
 
 		# Get database
-		db <- .self$.db[, c(.self$.fields[[MSDB.TAG.MOLID]], .self$.fields[[MSDB.TAG.MODE]], .self$.fields[[MSDB.TAG.MZ]])]
+		db <- .self$.db[, c(MSDB.TAG.MOLID, MSDB.TAG.MODE, MSDB.TAG.MZTHEO)]
 
 		# Filter on mode
 		if ( ! is.null(type) && ! is.na(type))
-			db <- db[db[[.self$.fields[[MSDB.TAG.MODE]]]] == (if (type == MSDB.TAG.POS) .self$.modes$pos else .self$.modes$neg), ]
+			db <- db[db[[MSDB.TAG.MODE]] == (if (type == MSDB.TAG.POS) .self$.modes$pos else .self$.modes$neg), ]
 
 		# Filter on molecule IDs
 		if ( ! is.null(molid) && ! is.na(molid))
-			db <- db[db[[.self$.fields[[MSDB.TAG.MOLID]]]] %in% molid,]
+			db <- db[db[[MSDB.TAG.MOLID]] %in% molid,]
 
 		# Get mz values
-		mz <- db[[.self$.fields[[MSDB.TAG.MZ]]]]
+		mz <- db[[MSDB.TAG.MZTHEO]]
 
 		# Count number of unique values
 		n <- sum(as.integer(! duplicated(mz)))
@@ -359,36 +366,36 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 
 		# Filter on mode
 		if ( ! is.null(mode) && ! is.na(mode))
-			db <- db[db[[.self$.fields[[MSDB.TAG.MODE]]]] == (if (mode == MSDB.TAG.POS) .self$.modes$pos else .self$.modes$neg), ]
+			db <- db[db[[MSDB.TAG.MODE]] == (if (mode == MSDB.TAG.POS) .self$.modes$pos else .self$.modes$neg), ]
 
 		# Filter on molecule IDs
 		if ( ! is.null(molids))
-			db <- db[db[[.self$.fields[[MSDB.TAG.MOLID]]]] %in% molids,]
+			db <- db[db[[MSDB.TAG.MOLID]] %in% molids,]
 
 		# Filter on attributions
 		if ( ! is.null(attribs) && ! is.na(attribs))
-			db <- db[db[[.self$.fields[[MSDB.TAG.ATTR]]]] %in% attribs,]
+			db <- db[db[[MSDB.TAG.ATTR]] %in% attribs,]
 
 		# Filter on columns
 		if ( ! is.null(col) && ! is.na(col))
-			db <- db[db[[.self$.fields[[MSDB.TAG.COL]]]] %in% col,]
+			db <- db[db[[MSDB.TAG.COL]] %in% col,]
 
 		# Filter on retention time
 		if ( ! is.null(rt.low) && ! is.na(rt.low) && ! is.null(rt.high) && ! is.na(rt.high))
-			db <- db[db[[.self$.fields[[MSDB.TAG.RT]]]] >= rt.low & db[[.self$.fields[[MSDB.TAG.RT]]]] <= rt.high, ]
+			db <- db[db[[MSDB.TAG.COLRT]] >= rt.low & db[[MSDB.TAG.COLRT]] <= rt.high, ]
 
 		# Remove retention times and column information
 		if (is.null(col) || is.na(col) || is.null(rt.low) || is.na(rt.low) || is.null(rt.high) || is.na(rt.high)) {
-			db <- db[, ! (colnames(db) %in% c(.self$.fields[[MSDB.TAG.COL]], .self$.fields[[MSDB.TAG.RT]]))]
+			db <- db[, ! (colnames(db) %in% c(MSDB.TAG.COL, MSDB.TAG.COLRT))]
 
 			# Remove duplicates
 			db <- db[ ! duplicated(db), ]
 		}
 
 		# Filter on mz
-		db <- db[db[[.self$.fields[[MSDB.TAG.MZ]]]] >= mz.low & db[[.self$.fields[[MSDB.TAG.MZ]]]] <= mz.high, ]
+		db <- db[db[[MSDB.TAG.MZTHEO]] >= mz.low & db[[MSDB.TAG.MZTHEO]] <= mz.high, ]
 
-		# Rename database fields into output fields
+		# Rename database fields
 #		conv <- c( mz = 'mztheo', rt = 'colrt') # solving mismatch of field names between database and output
 #		cols <- colnames(db)
 #		for (db.field in names(.self$.fields)) {
@@ -423,7 +430,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 		}
 
 		# Get masses
-		mz <- .self$.get(db, col = MSDB.TAG.MZ)
+		mz <- .self$.get(db, col = MSDB.TAG.MZTHEO)
 
 		# Remove duplicates
 		mz <- mz[ ! duplicated(mz)]
@@ -444,21 +451,21 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 
 		# Init db
 		.self$.init.db()
-		db <- .self$.db[, c(.self$.fields[[MSDB.TAG.MOLID]], .self$.fields[[MSDB.TAG.COL]], .self$.fields[[MSDB.TAG.RT]])]
+		db <- .self$.db[, c(MSDB.TAG.MOLID, MSDB.TAG.COL, MSDB.TAG.COLRT)]
 
 		# Filter on molecule ID
 		if ( ! is.null(molid) && ! is.na(molid))
-			db <- db[db[[.self$.fields[[MSDB.TAG.MOLID]]]] %in% molid,]
+			db <- db[db[[MSDB.TAG.MOLID]] %in% molid,]
 
 		# Remove duplicates
 		db <- db[! duplicated(db), ]
 
 		# Build retention time list
 		rt <- list()
-		cols <- db[[.self$.fields[[MSDB.TAG.COL]]]]
+		cols <- db[[MSDB.TAG.COL]]
 		cols <- cols[ ! duplicated(cols)]
 		for (col in cols) {
-			colrts <- db[db[[.self$.fields[[MSDB.TAG.COL]]]] %in% col, .self$.fields[[MSDB.TAG.RT]]]
+			colrts <- db[db[[MSDB.TAG.COL]] %in% col, MSDB.TAG.COLRT]
 			rt[col] <- list(colrts)
 		}
 

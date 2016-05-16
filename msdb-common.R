@@ -90,22 +90,8 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 
 		dft.fields <- list()
 
-		dft.fields[[MSDB.TAG.MZ]] <- 'mz'
-		dft.fields[[MSDB.TAG.RT]] <- 'rt'
-		dft.fields[[MSDB.TAG.MOLID]] <- 'molid'
-		dft.fields[[MSDB.TAG.COL]] <- 'col'
-		dft.fields[[MSDB.TAG.MODE]] <- 'mode'
-		dft.fields[[MSDB.TAG.ATTR]] <- 'attribution'
-		dft.fields[[MSDB.TAG.COMP]] <- 'composition'
-		dft.fields[[MSDB.TAG.MOLNAMES]] <- 'molnames'
-		dft.fields[[MSDB.TAG.MOLCOMP]] <- 'molcomp'
-		dft.fields[[MSDB.TAG.MOLMASS]] <- 'molmass'
-		dft.fields[[MSDB.TAG.INCHI]] <- 'inchi'
-		dft.fields[[MSDB.TAG.INCHIKEY]] <- 'inchikey'
-		dft.fields[[MSDB.TAG.PUBCHEM]] <- 'pubchem'
-		dft.fields[[MSDB.TAG.CHEBI]] <- 'chebi'
-		dft.fields[[MSDB.TAG.HMDB]] <- 'hmdb'
-		dft.fields[[MSDB.TAG.KEGG]] <- 'kegg'
+		for (f in c(MSDB.TAG.MZTHEO, MSDB.TAG.COLRT, MSDB.TAG.MOLID, MSDB.TAG.COL, MSDB.TAG.MODE, MSDB.TAG.ATTR, MSDB.TAG.COMP, MSDB.TAG.MOLNAMES, MSDB.TAG.MOLCOMP, MSDB.TAG.MOLMASS, MSDB.TAG.INCHI, MSDB.TAG.INCHIKEY, MSDB.TAG.PUBCHEM, MSDB.TAG.CHEBI, MSDB.TAG.HMDB, MSDB.TAG.KEGG))
+			dft.fields[[f]] <- f
 
 		return(dft.fields)
 	}
