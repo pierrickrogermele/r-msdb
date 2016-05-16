@@ -389,17 +389,17 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 		db <- db[db[[.self$.fields[[MSDB.TAG.MZ]]]] >= mz.low & db[[.self$.fields[[MSDB.TAG.MZ]]]] <= mz.high, ]
 
 		# Rename database fields into output fields
-		conv <- c( mz = 'mztheo', rt = 'colrt') # solving mismatch of field names between database and output
-		cols <- colnames(db)
-		for (db.field in names(.self$.fields)) {
-			output.field <- if (db.field %in% names(conv)) conv[[db.field]] else db.field
-			if (.self$.fields[[db.field]] %in% cols && output.field %in% names(.self$.output.fields))
-				cols[cols %in% .self$.fields[[db.field]]] <- .self$.output.fields[[output.field]]
-		}
-		colnames(db) <- cols
+#		conv <- c( mz = 'mztheo', rt = 'colrt') # solving mismatch of field names between database and output
+#		cols <- colnames(db)
+#		for (db.field in names(.self$.fields)) {
+#			output.field <- if (db.field %in% names(conv)) conv[[db.field]] else db.field
+#			if (.self$.fields[[db.field]] %in% cols && output.field %in% names(.self$.output.fields))
+#				cols[cols %in% .self$.fields[[db.field]]] <- .self$.output.fields[[output.field]]
+#		}
+#		colnames(db) <- cols
 
 		# Remove unwanted columns
-		db <- db[, colnames(db) %in% .self$.output.fields]
+#		db <- db[, colnames(db) %in% .self$.output.fields]
 
 		return(db)
 	})

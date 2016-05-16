@@ -9,7 +9,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# CLASS DECLARATION #
 	#####################
 	
-	MsDb <- setRefClass("MsDb", fields = list(.observers = "ANY", .output.fields = "list", .molids.sep = "character", .prec = "list", .output.streams = "ANY", .input.stream = "ANY", .mz.tol.unit = "character"))
+	MsDb <- setRefClass("MsDb", fields = list(.observers = "ANY", .prec = "list", .output.streams = "ANY", .input.stream = "ANY", .mz.tol.unit = "character"))
 	
 	###############
 	# CONSTRUCTOR #
@@ -20,8 +20,6 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		.observers <<- NULL
 		.output.streams <<- NULL
 		.input.stream <<- NULL
-		.output.fields <<- msdb.get.dft.output.fields()
-		.molids.sep <<- MSDB.DFT.MATCH.SEP
 		.prec <<- MSDB.DFT.PREC
 		.mz.tol.unit <<- MSDB.DFT.MZTOLUNIT
 		
@@ -94,30 +92,6 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	
 		# Add observers to current list
 		.observers <<- if (is.null(.self$.observers)) c(obs) else c(.self$.observers, obs)
-	})
-	
-	#####################
-	# GET OUTPUT FIELDS #
-	#####################
-	
-	MsDb$methods( getOutputFields = function() {
-		return(.self$.output.fields)
-	})
-	
-	#####################
-	# SET OUTPUT FIELDS #
-	#####################
-	
-	MsDb$methods( setOutputFields = function(fields) {
-		.output.fields <<- as.list(fields)
-	})
-	
-	##################
-	# SET MOLIDS SEP #
-	##################
-	
-	MsDb$methods( setMolidsSep = function(sep) {
-		.molids.sep <<- sep
 	})
 	
 	##################
@@ -253,7 +227,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# rt.tol.x          Tolerance parameter for the equations : rtinf = rt - rt.tol.x - rt ^ rt.tol.y and rtsup = rt + rt.tol.x + rt ^ rt.tol.y
 	# rt.tol.y          Tolerance parameter. See rt.tol.x parameter.
 	# attribs           Only search for peaks whose attribution is among this set of attributions.
-	# molids            Only search for peaks whose molecule ID is among this vector of integer molecule IDs. Can also be a data frame with a retention time column x.colnames$rt and a molecule ID column .self$.output.fields$molid.
+	# molids            Only search for peaks whose molecule ID is among this vector of integer molecule IDs. Can also be a data frame with a retention time column x.colnames$rt and a molecule ID column MSDB.TAG.molid.
 	# molids.rt.tol     Retention time tolerance used when molids parameter is a data frame (rt, id)
 	# precursor.match   Remove peaks whose molecule precursor peak has not also been matched.
 	# precursor.rt.tol
@@ -273,9 +247,9 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		if (precursor.match) {
 			# Get IDs of all molecules whose precursor peak matches one of the mz in the list
 			precursors.df <- .self$.doSearchForMzRtList(mode = mode, shift = shift, prec = prec, col = col, rt.tol = rt.tol, rt.tol.x = rt.tol.x, rt.tol.y = rt.tol.y, attribs = .self$.prec[[mode]], output.to.stream = FALSE)
-			cols.to.keep <- if (is.null(col)) .self$.output.fields$molid else c(.self$.output.fields$molid, .self$.output.fields$col, .self$.output.fields$colrt)
+			cols.to.keep <- if (is.null(col)) MSDB.TAG.MOLID else c(MSDB.TAG.MOLID, MSDB.TAG.COL, MSDB.TAG.COLRT)
 			precursors.ids <- precursors.df[, cols.to.keep, drop = FALSE]
-			precursors.ids <- precursors.ids[ ! is.na(precursors.ids[[.self$.output.fields$molid]]), , drop = FALSE]
+			precursors.ids <- precursors.ids[ ! is.na(precursors.ids[[MSDB.TAG.MOLID]]), , drop = FALSE]
 			precursors.ids <- precursors.ids[ ! duplicated(precursors.ids), ]
 
 			# Get all matching peaks whose molecule is inside the previously obtained list of molecules
@@ -286,18 +260,18 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 #
 #			# Merge results with the column/rt found for precursors.
 #			if ( ! is.null(col) && ! is.null(peaks)) {
-#				precursors.ids <- precursors.df[, c(.self$.output.fields$molid, .self$.output.fields$col, .self$.output.fields$colrt)]
-#				precursors.ids <- precursors.ids[ ! is.na(precursors.ids[[.self$.output.fields$molid]]), ]
+#				precursors.ids <- precursors.df[, c(MSDB.TAG.MOLID, MSDB.TAG.col, MSDB.TAG.COLRT)]
+#				precursors.ids <- precursors.ids[ ! is.na(precursors.ids[[MSDB.TAG.MOLID]]), ]
 #
 #				# Get rows where ID is NA
-#				peaks.na <- peaks[is.na(peaks[[.self$.output.fields$molid]]), ]
+#				peaks.na <- peaks[is.na(peaks[[MSDB.TAG.MOLID]]), ]
 #
 #				# Get rows where ID is found (i.e.: not NA)
-#				peaks <- peaks[, !(colnames(peaks) %in% c(.self$.output.fields$col, .self$.output.fields$colrt))] # drop col and colrt columns
-#				peaks.not.na <- peaks[! is.na(peaks[[.self$.output.fields$molid]]), ]
+#				peaks <- peaks[, !(colnames(peaks) %in% c(MSDB.TAG.COL, MSDB.TAG.COLRT))] # drop col and colrt columns
+#				peaks.not.na <- peaks[! is.na(peaks[[MSDB.TAG.MOLID]]), ]
 #
 #				# Add col and colrt values to found peaks
-#				peaks <- merge(peaks.not.na, precursors.ids, by = .self$.output.fields$molid)
+#				peaks <- merge(peaks.not.na, precursors.ids, by = MSDB.TAG.MOLID)
 #
 #				# Put back unfound peaks
 #				peaks <- rbind(peaks, peaks.na)
@@ -305,7 +279,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 #				# Sort
 #				print(colnames(peaks))
 #				print(x.colnames)
-#				peaks <- peaks[order(peaks[[x.colnames$mz]], peaks[[x.colnames$rt]], peaks[[.self$.output.fields$molid]], peaks[[.self$.output.fields$col]]), ]
+#				peaks <- peaks[order(peaks[[x.colnames$mz]], peaks[[x.colnames$rt]], peaks[[MSDB.TAG.MOLID]], peaks[[MSDB.TAG.COL]]), ]
 #
 #				# Remove rownames
 #				rownames(peaks) <- NULL
@@ -349,8 +323,8 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 #
 #		# Initialize y data frame, so when x contains no rows an empty y data frame is returned with all the columns set with right type.
 #		if (same.rows) {
-#			y <- peaks.fake[, if (is.null(col)) c(.self$.output.fields$mz) else c(.self$.output.fields$mz, .self$.output.fields$rt), drop = FALSE]
-#			y[.self$.output.fields$msmatching] <- character()
+#			y <- peaks.fake[, if (is.null(col)) c(MSDB.TAG.MZ) else c(MSDB.TAG.MZ, MSDB.TAG.RT), drop = FALSE]
+#			y[MSDB.TAG.MSMATCHING] <- character()
 #		}
 #		else
 #			y <- peaks.fake
@@ -387,9 +361,9 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 #				else {
 #					if (same.rows) {
 #						y[r, colnames(x.lines)] <- x.lines
-#						ids <- results[[.self$.output.fields$molid]]
+#						ids <- results[[MSDB.TAG.molid]]
 #						ids <- ids[ ! duplicated(ids)] # Remove duplicated values
-#						y[r, .self$.output.fields$msmatching] <- paste(ids, collapse = .self$.molids.sep)
+#						y[r, MSDB.TAG.msmatching] <- paste(ids, collapse = .self$.molids.sep)
 #					}
 #					if ( ! same.rows || peak.table) {
 #						new.rows <- cbind(x.lines, results, row.names = NULL)
@@ -444,7 +418,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 
 		# List molecule IDs
 		if ( ! is.null(molids.rt.tol) && is.data.frame(molids)) {
-			ids <- molids[(rt >= molids[[.self$.output.fields$colrt]] - molids.rt.tol) & (rt <= molids[[.self$.output.fields$colrt]] + molids.rt.tol), .self$.output.fields$molid]
+			ids <- molids[(rt >= molids[[MSDB.TAG.colrt]] - molids.rt.tol) & (rt <= molids[[MSDB.TAG.colrt]] + molids.rt.tol), MSDB.TAG.molid]
 			if (length(ids) == 0)
 				# No molecule ID match for this retention time
 				return(data.frame()) # return empty result set

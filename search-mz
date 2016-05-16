@@ -365,8 +365,6 @@ read_args <- function() {
 		             '4tabsql' = Ms4TabSql(host = extract.address(opt$url), port = extract.port(opt$url), dbname = opt$dbname, user = opt$user, password = opt$password),
 		             file = MsFileDb(file = opt$url),
 		             NULL)
-		db$setOutputFields(opt[['output-col-names']])
-		db$setMolidsSep(opt[['molids-sep']])
 		db$setPrecursors(precursors)
 		if (db$areDbFieldsSettable())
 			db$setDbFields(opt[['db-fields']])
