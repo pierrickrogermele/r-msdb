@@ -22,6 +22,7 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 	MSDB.TAG.COMP <- 'comp'
 	MSDB.TAG.MOLNAMES <- 'molnames'
 	MSDB.TAG.MOLCOMP <- 'molcomp'
+	MSDB.TAG.MOLATTR <- 'molattr'
 	MSDB.TAG.MOLMASS <- 'molmass'
 	MSDB.TAG.INCHI <- 'inchi'
 	MSDB.TAG.INCHIKEY <- 'inchikey'

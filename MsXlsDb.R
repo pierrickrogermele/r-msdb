@@ -5,6 +5,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 	source('msdb-common.R')
 	source('MsDb.R')
 	source('../r-lib/strhlp.R', chdir = TRUE)
+	source('../r-lib/dfhlp.R', chdir = TRUE)
 	source('../r-lib/search.R', chdir = TRUE)
 	source('../r-lib/excelhlp.R', chdir = TRUE)
 	
@@ -241,6 +242,40 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 			type <- c(MSDB.TAG.POS, MSDB.TAG.NEG)
 
 		return(sum(vapply(molid, function(m) { if (is.na(m)) 0 else sum(vapply(type, function(t) { peaks <- .self$.get.peaks(m, t) ; if (is.null(peaks)) 0 else nrow(peaks) }, FUN.VALUE = 1)) }, FUN.VALUE = 1)))
+	})
+
+	##################
+	# GET PEAK TABLE #
+	##################
+
+	MsXlsDb$methods( getPeakTable = function(molid = NA_integer_, mode = NA_character_) {
+
+		peaks <- NULL
+
+		# Set default molecule IDs
+		if (is.null(molid) || (length(molid) == 1 && is.na(molid)))
+			molid <- .self$getMoleculeIds()
+
+		# Set default modes
+		if (is.null(mode) || (length(mode) == 1 && is.na(mode)))
+			mode <- c(MSDB.TAG.POS, MSDB.TAG.NEG)
+
+		# Loop on all molecules
+		for (mol in molid) {
+
+			# Loop on all modes
+			for (mod in mode) {
+				m.peaks <- .self$.get.peaks(mol, mod)
+				if ( ! is.null(m.peaks) && nrow(m.peaks) > 0) {
+					m.peaks[[MSDB.TAG.MOLID]] <- mol
+					m.peaks[[MSDB.TAG.MODE]] <- mod
+					peaks <- if (is.null(peaks)) m.peaks else rbind(peaks, m.peaks)
+					peaks <- df.move.col.first(peaks, c(MSDB.TAG.MOLID, MSDB.TAG.MODE))
+				}
+			}
+		}
+
+		return(peaks)
 	})
 	
 	#################
