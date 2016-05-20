@@ -53,7 +53,9 @@ read.args <- function() {
     '4tabsqldb',            '4', 0, 'logical',      'Run tests on 4TabSql database. Disabled by default.',
     'name',                 'n', 1, 'character',    'Run only test of the specified name. Unset by default.',
     'quick',                'q', 0, 'logical',      'Do not run long tests. Disabled by default.',
-    'xlsdb',                'x', 0, 'logical',      'Run tests on XLS database. Disabled by default.'
+    'xlsdb',                'x', 0, 'logical',      'Run tests on XLS database. Disabled by default.',
+    'msdb',                 'd', 0, 'logical',      'Test MsDb classes.',
+    'searchmz',             'z', 0, 'logical',      'Test search-mz script.'
   ), byrow = TRUE, ncol = 5)
    
   opt <- getopt(spec)
@@ -165,20 +167,26 @@ if ( ! is.null(opt$name))
 	test.fcts = paste0('^', opt$name, '$')
 
 # Loop on all db types
-for (type in dbtypes) {
-	cat("****************************************************************\n")
-	cat("RUNNING TESTS FOR DB TYPE \"", type, "\".\n", sep = '')
-	set.conn.flag(type)
-	set.db(type)
-	test.suite <- defineTestSuite('msdb', dirname(script.path), testFileRegexp = '^test-.+\\.R$', testFuncRegexp = test.fcts)
-	isValidTestSuite(test.suite)
-	test.results <- runTestSuite(test.suite)
-	print(test.results)
-#	printTextProtocol(test.results, showDetails = FALSE)
-}
+to.test <- character()
+if ( ! is.null(opt$searchmz))
+	to.test <- c(to.test, 'searchmz')
+if ( ! is.null(opt$msdb))
+	to.test <- c(to.test, 'msdb')
+if (length(to.test) > 0)
+	for (type in dbtypes) {
+		cat("****************************************************************\n")
+		cat("RUNNING TESTS FOR DB TYPE \"", type, "\".\n", sep = '')
+		set.conn.flag(type)
+		set.db(type)
+		test.suite <- defineTestSuite('msdb', dirname(script.path), testFileRegexp = paste0('^test-all-dbs-(', paste(to.test, collapse = '|'), ')-.+\\.R$'), testFuncRegexp = test.fcts)
+		isValidTestSuite(test.suite)
+		test.results <- runTestSuite(test.suite)
+		print(test.results)
+	#	printTextProtocol(test.results, showDetails = FALSE)
+	}
 
-if (is.null(opt$name)) {
-	test.suite <- defineTestSuite('msdb', dirname(script.path), testFileRegexp = '^test-.+\\.R$', testFuncRegexp = '^test\\.searchmz\\.ticket\\..+$')
+if ( ! is.null(opt$searchmz)) {
+	test.suite <- defineTestSuite('search-mz', dirname(script.path), testFileRegexp = '^test-searchmz-.+\\.R$', testFuncRegexp = '^.+$')
 	isValidTestSuite(test.suite)
 	test.results <- runTestSuite(test.suite)
 	print(test.results)
