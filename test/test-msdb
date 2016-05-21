@@ -54,8 +54,9 @@ read.args <- function() {
     'name',                 'n', 1, 'character',    'Run only test of the specified name. Unset by default.',
     'quick',                'q', 0, 'logical',      'Do not run long tests. Disabled by default.',
     'xlsdb',                'x', 0, 'logical',      'Run tests on XLS database. Disabled by default.',
-    'msdb',                 'd', 0, 'logical',      'Test MsDb classes.',
-    'searchmz',             'z', 0, 'logical',      'Test search-mz script.'
+    'msdb',                 'd', 0, 'logical',      'Test MsDb classes. Disabled by default.',
+    'searchmz',             'z', 0, 'logical',      'Test search-mz script. Disabled by default.',
+    'searchmz-script',      NA_character_, 0, 'character',   'Set path to search-mz script to test.'
   ), byrow = TRUE, ncol = 5)
    
   opt <- getopt(spec)
@@ -98,13 +99,17 @@ set.conn.flag <- function(type) {
 # CALL SEARCH MZ #
 ##################
 
+.g.search.mz.script <- file.path(dirname(script.path), '..', 'search-mz');
+
 call.search.mz <- function(opt, silent = FALSE, use.global.conn.flags = TRUE) {
+
+	# TODO Add option to choose search-mz script.
 
 	if (use.global.conn.flags && is.null(.g.conn.flag))
 		stop("No connexion flags provided for search-mz.")
 
 	# Set program path
-	prog <- file.path(dirname(script.path), '..', 'search-mz')
+	prog <- .g.search.mz.script
 
 	# Set arguments
 	args <- c(opt, '--debug')
@@ -155,6 +160,10 @@ set.db <- function(type) {
 options(error = function() { traceback(2) ; q(status = 1) }, warn = 2 )
 
 opt <- read.args()
+
+# Set search-mz script
+if ( ! is.null(opt[['searchmz-script']]))
+	.g.search.mz.script <<- opt[['searchmz-script']]
 
 # Set db types to test
 dbtypes <- names(DB)[names(DB) %in% names(opt)]
