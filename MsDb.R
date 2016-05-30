@@ -214,6 +214,14 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		stop("Method getNbPeaks() not implemented in concrete class.")
 	})
 
+	##################
+	# GET PEAK TABLE #
+	##################
+
+	MsDb$methods( getPeakTable = function(molid = NA_integer_, mode = NA_character_){
+		stop("Method getPeakTable() not implemented in concrete class.")
+	})
+
 	##########
 	# SEARCH #
 	##########
