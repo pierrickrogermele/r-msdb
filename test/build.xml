@@ -7,6 +7,8 @@
 	<target name="all" depends="test.data">
 		<exec executable="./test-msdb" failonerror="true">
 			<arg value="-f"/>
+			<arg value="-d"/>
+			<arg value="-z"/>
 		</exec>
 	</target>
 
