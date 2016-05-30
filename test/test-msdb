@@ -219,12 +219,13 @@ if (length(to.test) > 0)
 		isValidTestSuite(test.suite)
 		test.results <- runTestSuite(test.suite)
 		print(test.results)
-	#	printTextProtocol(test.results, showDetails = FALSE)
+		(test.results$msdb$nErr == 0 && test.results$msdb$nFail == 0) || stop("Test fails !")
 	}
 
 if ( ! is.null(opt$searchmz)) {
-	test.suite <- defineTestSuite('search-mz', dirname(script.path), testFileRegexp = '^test-searchmz-.+\\.R$', testFuncRegexp = '^.+$')
+	test.suite <- defineTestSuite('searchmz', dirname(script.path), testFileRegexp = '^test-searchmz-.+\\.R$', testFuncRegexp = '^.+$')
 	isValidTestSuite(test.suite)
 	test.results <- runTestSuite(test.suite)
 	print(test.results)
+	(test.results$searchmz$nErr == 0 && test.results$searchmz$nFail == 0) || stop("Test fails !")
 }
