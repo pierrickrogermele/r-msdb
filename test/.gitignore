@@ -9,3 +9,4 @@ filedb-*.tsv
 *.html
 mz-input*.tsv
 mzrt-input-*.tsv
+!res/*
