@@ -186,9 +186,9 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 			stop(paste0("Impossible to parse column description \"", desc, "\"."))
 
 		type <- g[1, 2]
-		stationary_phase <- if (nchar(g[1, 4]) > 0) g[1, 4] else NA_character_
-		msdevice <- if (nchar(g[1, 8]) > 0) g[1, 8] else NA_character_
-		time <- if (nchar(g[1, 6]) > 0) as.integer(g[1, 6]) else if (nchar(g[1, 10]) > 0) as.integer(g[1, 10]) else NA_integer_
+		stationary_phase <- if ( ! is.na(g[1, 4]) && nchar(g[1, 4]) > 0) g[1, 4] else NA_character_
+		msdevice <- if ( ! is.na(g[1, 8]) && nchar(g[1, 8]) > 0) g[1, 8] else NA_character_
+		time <- if ( ! is.na(g[1,6]) && nchar(g[1, 6]) > 0) as.integer(g[1, 6]) else ( if ( ! is.na(g[1, 10]) && nchar(g[1, 10]) > 0) as.integer(g[1, 10]) else NA_integer_ )
 		
 		# Correct values
 		if ( ! is.na(stationary_phase) && stationary_phase == '150 5 2 1') stationary_phase <- '150*5*2.1'
