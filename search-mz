@@ -92,8 +92,11 @@ parse.arg.val <- function(opt) {
 	}
 
 	# Parse MS modes
-	if ( ! is.null(opt[['db-ms-modes']]))
-		opt[['db-ms-modes']] <- split.kv.list(opt[['db-ms-modes']])
+	if ( ! is.null(opt[['db-ms-modes']])) {
+		cust <- split.kv.list(opt[['db-ms-modes']])
+		opt[['db-ms-modes']] <- split.kv.list(MSDB.DFT[['db-ms-modes']])
+		opt[['db-ms-modes']][names(cust)] <- cust
+	}
 
 	# Parse retention time columns
 	if ( ! is.null(opt$rtcol))
