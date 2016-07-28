@@ -103,7 +103,6 @@ set.conn.flag <- function(type) {
 
 	for(field in names(db.params)) {
 		.g.conn.flag <<- switch(field,
-			useragent = c(.g.conn.flag, '--useragent', paste0('"', db.params$useragent, '"')),
 			modes = c(.g.conn.flag, '--db-ms-modes', concat.kv.list(db.params$modes)),
 			fields = c(.g.conn.flag, '--db-fields', concat.kv.list(db.params$fields)),
 			dbname = c(.g.conn.flag, '--db-name', db.params$dbname),

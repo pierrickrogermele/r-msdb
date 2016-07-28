@@ -8,13 +8,13 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	# CLASS DECLARATION #
 	#####################
 	
-	MsPeakForestDb <- setRefClass("MsPeakForestDb", contains = "MsDb", fields = list(.url = "character", .url.scheduler = "ANY"))
+	MsPeakForestDb <- setRefClass("MsPeakForestDb", contains = "MsDb", fields = list(.url = "character", .url.scheduler = "ANY", .token = "character"))
 	
 	###############
 	# CONSTRUCTOR #
 	###############
 	
-	MsPeakForestDb$methods( initialize = function(url = NA_character_, useragent = NA_character_, ...) {
+	MsPeakForestDb$methods( initialize = function(url = NA_character_, useragent = NA_character_, token = NA_character_, ...) {
 
 		# Check URL
 		if (is.null(url) || is.na(url))
@@ -23,6 +23,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		.url <<- url
 		.url.scheduler <<- UrlRequestScheduler$new(n = 3, useragent = useragent)
 		.self$.url.scheduler$setVerbose(1L)
+		.token <<- token
 
 		callSuper(...)
 	})
@@ -35,6 +36,13 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		res <- NULL
 
+		# Add token
+		if ( ! is.na(.self$.token))
+			params <- c(params, token = .self$.token)
+				param.str <- if (is.null(params)) '' else paste('?', vapply(names(params), function(p) paste(p, params[[p]], sep = '='), FUN.VALUE = ''), collapse = '&', sep = '')
+			print(paste0('URL ', url, param.str))
+
+		# Get URL
 		content <- .self$.url.scheduler$getUrl(url = url, params = params)
 
 		if (ret.type == 'json') {
