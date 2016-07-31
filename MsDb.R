@@ -218,7 +218,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# GET PEAK TABLE #
 	##################
 
-	MsDb$methods( getPeakTable = function(molid = NA_integer_, mode = NA_character_){
+	MsDb$methods( getPeakTable = function(molid = NA_integer_, mode = NA_character_) {
 		stop("Method getPeakTable() not implemented in concrete class.")
 	})
 

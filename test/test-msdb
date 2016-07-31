@@ -9,8 +9,10 @@ source(file.path(dirname(script.path), '..', 'MsPeakForestDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'MsFileDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'MsXlsDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'Ms4TabSqlDb.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', 'MsBioDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', '..', 'r-lib', 'strhlp.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', '..', 'r-biodb', 'BiodbFactory.R'), chdir = TRUE)
 
 #############
 # CONSTANTS #
@@ -24,7 +26,7 @@ for (var in c('RMSDB_4TABSQL_URL', 'RMSDB_4TABSQL_DBNAME', 'RMSDB_4TABSQL_USER',
 	if ( ! var %in% names(ENV))
 		ENV[[var]] <- NA_character_
 
-DB.TYPES = c('filedb', 'filedb-cust-modes', 'filedb-cust-cols', '4tabsqldb', 'peakforestdb', 'xlsdb')
+DB.TYPES = c('filedb', 'filedb-cust-modes', 'filedb-cust-cols', '4tabsqldb', 'peakforestdb', 'xlsdb', 'massbank')
 
 #############
 # READ ARGS #
@@ -47,6 +49,7 @@ read.args <- function() {
     'name',                 'n', 1, 'character',    'Run only test of the specified name. Unset by default.',
     'quick',                'q', 0, 'logical',      'Do not run long tests. Disabled by default.',
     'xlsdb',                'x', 0, 'logical',      'Run tests on XLS database. Disabled by default.',
+    'massbank',             NA_character_, 0, 'logical',      'Run tests on Massbank database. Disabled by default.',
     'msdb',                 'd', 0, 'logical',      'Test MsDb classes. Disabled by default.',
     'searchmz',             'z', 0, 'logical',      'Test search-mz script. Disabled by default.',
     'searchmz-script',      NA_character_, 0, 'character',   'Set path to search-mz script to test.'
@@ -178,6 +181,7 @@ set.db <- function(type, test.dir) {
 		'filedb-cust-modes' = { db <- MsFileDb$new(file = db.params$url) ; db$setDbMsModes(db.params$modes) ; db },
 		'filedb-cust-cols' = { db <- MsFileDb$new(file = db.params$url) ; db$setDbFields(msdb.make.db.fields(db.params$fields)) ; db },
 		'xlsdb' = MsXlsDb$new(db_dir = db.params$url, cache_dir = db.params$cache_dir),
+		'massbank' = MsBioDb$new(BiodbFactory$new(useragent = USERAGENT)$getConn(BIODB.MASSBANK)),
 		NULL)
 }
 

@@ -2,24 +2,24 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 
 	library(methods)
 	source('MsDb.R')
-	source(file.path('..', 'r-biodb', 'BioDbConn.R'))
+	source(file.path('..', 'r-biodb', 'MassdbConn.R'), chdir = TRUE)
 
 	#####################
 	# CLASS DECLARATION #
 	#####################
 	
-	MsBioDb <- setRefClass("MsBioDb", contains = "MsDb", fields = list(.biodb = "ANY"))
+	MsBioDb <- setRefClass("MsBioDb", contains = "MsDb", fields = list(.massdb = "ANY"))
 	
 	###############
 	# CONSTRUCTOR #
 	###############
 	
-	MsBioDb$methods( initialize = function(biodb = NA_character_, ...) {
+	MsBioDb$methods( initialize = function(massdb = NULL, ...) {
 
 		# Check bio database
-		! is.na(biodb) || stop("You must set a bio database.")
-		inherits(biodb, "BiodbConn") || stop("The bio database must inherit from BiodbConn class.")
-		.biodb <<- biodb
+		! is.null(massdb) || stop("You must set a bio database.")
+		inherits(massdb, "MassdbConn") || stop("The bio database must inherit from MassdbConn class.")
+		.massdb <<- massdb
 
 		callSuper(...)
 	})
@@ -29,7 +29,7 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 	####################
 	
 	MsBioDb$methods( getMoleculeIds = function() {
-		return(.self$.biodb$getEntryIds(type = RBIODB.COMPOUND))
+		return(.self$.massdb$getEntryIds(type = RBIODB.COMPOUND))
 	})
 
 	####################
@@ -37,7 +37,55 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 	####################
 	
 	MsBioDb$methods( getNbMolecules = function() {
-		return(.self$.biodb$getNbEntries(type = RBIODB.COMPOUND))
+		return(.self$.massdb$getNbEntries(type = RBIODB.COMPOUND))
+	})
+	
+	#################
+	# GET MZ VALUES #
+	#################
+	
+	MsBioDb$methods( getMzValues = function(mode = NULL) {
+		return(.self$.massdb$getMzValues(mode = if (mode == MSDB.TAG.NEG) BIODB.MSMODE.NEG else BIODB.MSMODE.POS))
+	})
+	
+	#####################
+	# GET MOLECULE NAME #
+	#####################
+	
+	MsBioDb$methods( getMoleculeName = function(molid) {
+		return(.self$.massdb$getMoleculeName(molid))
+	})
+	
+	###############################
+	# GET CHROMATOGRAPHIC COLUMNS #
+	###############################
+	
+	MsBioDb$methods( getChromCol = function(molid = NULL) {
+		return(.self$.massdb$getChromCol(molid))
+	})
+
+	################
+	# FIND BY NAME #
+	################
+
+	MsBioDb$methods( findByName = function(name) {
+		return(.self$.massdb$findCompoundByName(name))
+	})
+	
+	#######################
+	# GET RETENTION TIMES #
+	#######################
+	
+	MsBioDb$methods( getRetentionTimes = function(molid, col = NA_character_) {
+		return(.self$.massdb$getRetentionTimes(molid, chrom.cols = col))
+	})
+	
+	################
+	# GET NB PEAKS #
+	################
+	
+	MsBioDb$methods( getNbPeaks = function(molid = NA_integer_, mode = NA_character_) {
+		return(.self$.massdb$getNbPeaks(molid, mode = if (mode == MSDB.TAG.NEG) BIODB.MSMODE.NEG else BIODB.MSMODE.POS))
 	})
 
 }
