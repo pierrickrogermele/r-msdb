@@ -136,7 +136,7 @@ test.search.mzrt.no.result <- function() {
 
 test.search.mz <- function() {
 
-	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
+	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 100)
 	mzvals <- sort(mzvals)
 
 	for (mz in mzvals) {

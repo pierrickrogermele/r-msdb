@@ -39,6 +39,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 	MsXlsDb$methods( initialize = function(db_dir = NA_character_, limit = NA_integer_, cache_dir = NA_character_, cache = FALSE, ...) {
 
 		# Initialize members
+		                # TODO check that db_dir is not null neither na, and tests that it exists and is a directory.
 		.db_dir <<- if ( ! is.null(db_dir)) db_dir else NA_character_
 		.limit <<- if ( ! is.null(limit) && ! is.na(limit) && limit > 0) limit else NA_integer_
 		cache_dir <- if (cache && is.na(cache_dir) && ! is.na(db_dir)) file.path(db_dir, 'cache') else cache_dir
@@ -283,7 +284,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 	#################
 	
 	# Returns a numeric vector of all masses stored inside the database.
-	MsXlsDb$methods( getMzValues = function(mode = NULL) {
+	MsXlsDb$methods( getMzValues = function(mode = NULL, max.results = NA_integer_) {
 
 		mz <- numeric()
 
@@ -294,6 +295,10 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 
 		# Remove duplicated
 		mz <- mz[ ! duplicated(mz)]
+
+		# Apply cut-off
+		if ( ! is.na(max.results))
+			mz <- mz[1:max.results]
 
 		return(mz)
 	})

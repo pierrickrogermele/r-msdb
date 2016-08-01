@@ -416,7 +416,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 	#################
 	
 	# Returns a numeric vector of all masses stored inside the database.
-	MsFileDb$methods( getMzValues = function(mode = NULL) {
+	MsFileDb$methods( getMzValues = function(mode = NULL, max.results = NA_integer_) {
 
 		# Init db
 		.self$.init.db()
@@ -434,6 +434,10 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 
 		# Remove duplicates
 		mz <- mz[ ! duplicated(mz)]
+
+		# Apply cut-off
+		if ( ! is.na(max.results))
+			mz <- mz[1:max.results]
 
 		return(mz)
 	})

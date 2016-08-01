@@ -220,7 +220,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	# GET MZ VALUES #
 	#################
 	
-	MsPeakForestDb$methods( getMzValues = function(mode = NULL) {
+	MsPeakForestDb$methods( getMzValues = function(mode = NULL, max.results = NA_integer_) {
 
 		# Build URL
 		url <- paste0(.self$.url, 'spectra/lcms/peaks/list-mz')
@@ -230,8 +230,12 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		if ( ! is.null(mode))
 			params <- c(params, mode = if (mode == MSDB.TAG.POS) 'positive' else 'negative')
 
-		# Get MZ valuels
+		# Get MZ values
 		mz <- .self$.get.url(url = url, params = params)
+
+		# Apply cut-off
+		if ( ! is.na(max.results))
+			mz <- mz[1:max.results]
 
 		return(mz)
 	})

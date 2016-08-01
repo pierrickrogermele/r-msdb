@@ -70,8 +70,8 @@ read.args <- function() {
 # GET RES PATH #
 ###############
 
-get.res.path <- function (file) {
-	return(file.path(dirname(script.path), file))
+get.res.path <- function (...) {
+	return(file.path(dirname(script.path), ...))
 }
 
 #################
@@ -86,7 +86,7 @@ get.db.params <- function(type, test.dir) {
 		'filedb-cust-cols' = list( type = 'file', db = MsFileDb, url = get.res.path( 'filedb-custcols.tsv'), fields = list(mz = 'MASS', rt = 'RETTime', col = 'column')),
 		'4tabsqldb' = list(type = '4tabsql', db = Ms4TabSqlDb, url = ENV[['RMSDB_4TABSQL_URL']], dbname = ENV[['RMSDB_4TABSQL_DBNAME']], user = ENV[['RMSDB_4TABSQL_USER']], password = ENV[['RMSDB_4TABSQL_PASSWORD']]),
 		'peakforestdb' = list(type = 'peakforest', db = MsPeakForestDb, url = PEAKFOREST.URL, useragent = USERAGENT),
-		'xlsdb' = list(type = 'xls', db = MsXlsDb, url = get.res.path( 'xlsdb'), cache_dir = get.res.path( 'xlsdb', 'cache'))
+		'xlsdb' = list(type = 'xls', db = MsXlsDb, url = get.res.path( 'xlsdb'), cache = TRUE)
 	)
 
 	return(db.params)

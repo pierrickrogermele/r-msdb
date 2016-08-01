@@ -157,7 +157,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	#################
 	
 	# Returns a numeric vector of all masses stored inside the database.
-	MsDb$methods( getMzValues = function(mode = NULL) {
+	MsDb$methods( getMzValues = function(mode = NULL, max.results = NA_integer_) {
 		stop("Method getMzValues() not implemented in concrete class.")
 	})
 	
