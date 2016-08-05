@@ -104,8 +104,8 @@ test.rt <- function() {
 }
 
 test.search.mz.no.result <- function() {
-	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
-	mzvals <- sort(mzvals)
+	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 100)
+	checkTrue(length(mzvals) <= 100)
 	r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mzvals[1] - 10), mode = MSDB.TAG.POS, prec = 5, shift = 0)
 	checkTrue(MSDB.TAG.MOLID %in% colnames(r))
 	checkTrue(MSDB.TAG.MOLNAMES %in% colnames(r))
@@ -118,8 +118,8 @@ test.search.mz.no.result <- function() {
 }
 
 test.search.mzrt.no.result <- function() {
-	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
-	mzvals <- sort(mzvals)
+	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 100)
+	checkTrue(length(mzvals) <= 100)
 	r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mzvals[1] - 10, rt = 8.9), mode = MSDB.TAG.POS, prec = 5, shift = 0, rt.tol.x = 5, rt.tol.y = 0.8, col = c('blabla', 'yep'))
 	checkTrue(MSDB.TAG.MOLID %in% colnames(r))
 	checkTrue(MSDB.TAG.MOLNAMES %in% colnames(r))
@@ -137,6 +137,7 @@ test.search.mzrt.no.result <- function() {
 test.search.mz <- function() {
 
 	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 100)
+	checkTrue(length(mzvals) <= 100)
 	mzvals <- sort(mzvals)
 
 	for (mz in mzvals) {
@@ -158,8 +159,8 @@ test.search.mz <- function() {
 
 test.search.mz.plain <- function() {
 
-	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
-	mzvals <- sort(mzvals)
+	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 100)
+	checkTrue(length(mzvals) <= 100)
 
 	get.db()$setMzTolUnit(MSDB.MZTOLUNIT.PLAIN)
 
@@ -184,9 +185,8 @@ test.search.mz.plain <- function() {
 
 test.search.mzrt <- function() {
 
-	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS)
-	mzvals <- sort(mzvals)
-	mzvals <- mzvals
+	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 100)
+	checkTrue(length(mzvals) <= 100)
 
 	for (mz in mzvals) {
 		if ( ! is.na(mz)) {

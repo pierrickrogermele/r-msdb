@@ -2,7 +2,7 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 
 	library(methods)
 	source('MsDb.R')
-	source(file.path('..', 'r-biodb', 'MassdbConn.R'), chdir = TRUE)
+	source(file.path('..', 'r-biodb', 'BiodbFactory.R'), chdir = TRUE)
 
 	#####################
 	# CLASS DECLARATION #
@@ -29,7 +29,7 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 	####################
 	
 	MsBioDb$methods( getMoleculeIds = function() {
-		return(.self$.massdb$getEntryIds(type = RBIODB.COMPOUND))
+		return(.self$.massdb$getEntryIds(type = BIODB.COMPOUND))
 	})
 
 	####################
@@ -37,15 +37,15 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 	####################
 	
 	MsBioDb$methods( getNbMolecules = function() {
-		return(.self$.massdb$getNbEntries(type = RBIODB.COMPOUND))
+		return(.self$.massdb$getNbEntries(type = BIODB.COMPOUND))
 	})
 	
 	#################
 	# GET MZ VALUES #
 	#################
 	
-	MsBioDb$methods( getMzValues = function(mode = NULL) {
-		return(.self$.massdb$getMzValues(mode = if (mode == MSDB.TAG.NEG) BIODB.MSMODE.NEG else BIODB.MSMODE.POS))
+	MsBioDb$methods( getMzValues = function(mode = NULL, max.results = NA_integer_) {
+		return(.self$.massdb$getMzValues(mode = if (mode == MSDB.TAG.NEG) BIODB.MSMODE.NEG else BIODB.MSMODE.POS), max.results = max.results)
 	})
 	
 	#####################
