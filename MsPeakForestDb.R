@@ -47,7 +47,6 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		if ( ! is.na(.self$.token))
 			params <- c(params, token = .self$.token)
 				param.str <- if (is.null(params)) '' else paste('?', vapply(names(params), function(p) paste(p, params[[p]], sep = '='), FUN.VALUE = ''), collapse = '&', sep = '')
-			print(paste0('URL ', url, param.str))
 
 		# Get URL
 		content <- .self$.url.scheduler$getUrl(url = url, params = params)

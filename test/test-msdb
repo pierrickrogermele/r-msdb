@@ -20,7 +20,7 @@ PEAKFOREST.URL <- 'https://rest.peakforest.org/'
 USERAGENT <- 'r-msdb.test ; pierrick.roger@gmail.com'
 
 ENV <- Sys.getenv()
-for (var in c('RMSDB_4TABSQL_URL', 'RMSDB_4TABSQL_DBNAME', 'RMSDB_4TABSQL_USER', 'RMSDB_4TABSQL_PASSWORD'))
+for (var in c('RMSDB_4TABSQL_URL', 'RMSDB_4TABSQL_DBNAME', 'RMSDB_4TABSQL_USER', 'RMSDB_4TABSQL_PASSWORD', 'RMSBD_PEAKFOREST_TOKEN'))
 	if ( ! var %in% names(ENV))
 		ENV[[var]] <- NA_character_
 
@@ -82,7 +82,7 @@ get.db.params <- function(type, test.dir) {
 		'filedb-cust-modes' = list( type = 'file', db = MsFileDb, url = get.res.path( 'filedb-custmodes.tsv'), modes = list(pos = '+', neg = '-')),
 		'filedb-cust-cols' = list( type = 'file', db = MsFileDb, url = get.res.path( 'filedb-custcols.tsv'), fields = list(mz = 'MASS', rt = 'RETTime', col = 'column')),
 		'4tabsqldb' = list(type = '4tabsql', db = Ms4TabSqlDb, url = ENV[['RMSDB_4TABSQL_URL']], dbname = ENV[['RMSDB_4TABSQL_DBNAME']], user = ENV[['RMSDB_4TABSQL_USER']], password = ENV[['RMSDB_4TABSQL_PASSWORD']]),
-		'peakforestdb' = list(type = 'peakforest', db = MsPeakForestDb, url = PEAKFOREST.URL, useragent = USERAGENT),
+		'peakforestdb' = list(type = 'peakforest', db = MsPeakForestDb, url = PEAKFOREST.URL, useragent = USERAGENT, token = ENV[['RMSBD_PEAKFOREST_TOKEN']]),
 		'xlsdb' = list(type = 'xls', db = MsXlsDb, url = get.res.path( 'xlsdb'), cache_dir = get.res.path( 'xlsdb', 'cache'))
 	)
 
@@ -108,6 +108,7 @@ set.conn.flag <- function(type) {
 			dbname = c(.g.conn.flag, '--db-name', db.params$dbname),
 			user = c(.g.conn.flag, '--db-user', db.params$user),
 			password = c(.g.conn.flag, '--db-password', db.params$password),
+			token = c(.g.conn.flag, '--db-token', db.params$token),
 			.g.conn.flag
 		)
 	}
@@ -171,7 +172,7 @@ set.db <- function(type, test.dir) {
 	db.params <- get.db.params(type, test.dir)
 
 	.g.db <<- switch(type,
-		'peakforestdb' = MsPeakForestDb$new(url = db.params$url, useragent = db.params$useragent),
+		'peakforestdb' = MsPeakForestDb$new(url = db.params$url, useragent = db.params$useragent, token = db.params$token),
 		'4tabsqldb' = Ms4TabSqlDb$new(host = extract.address(db.params$url), port = extract.port(db.params$url), dbname = db.params$dbname, user = db.params$user, password = db.params$password),
 		'filedb' = MsFileDb$new(file = db.params$url),
 		'filedb-cust-modes' = { db <- MsFileDb$new(file = db.params$url) ; db$setDbMsModes(db.params$modes) ; db },
