@@ -20,7 +20,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		if (is.null(url) || is.na(url))
 		    stop("No URL defined for new MsPeakForestDb instance.")
 
-		if (substring(url, nchar(url), 1) == '/')
+		if (substring(url, nchar(url) - 1, 1) == '/')
 			url <- substring(url, nchar(url) - 1)
 		.url <<- url
 		.url.scheduler <<- UrlRequestScheduler$new(n = 3, useragent = useragent)
