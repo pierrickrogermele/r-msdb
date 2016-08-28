@@ -229,7 +229,7 @@ read_args <- function() {
 
 	# Check values
 	error <- .check.db.conn.opts(opt)
-	if (is.null(opt[['output-file']])) {
+	if (is.null(opt[['output-file']]) && is.null(opt[['list-cols']])) {
 		warning("You must set a path for the output file.")
 		error <- TRUE
 	}
@@ -470,7 +470,7 @@ db <- .load.db(opt)
 # Print columns
 if ( ! is.null(opt[['list-cols']])) {
 	cols <- db$getChromCol()
-	df.write.tsv(cols, file = opt[['output-file']])
+	df.write.tsv(cols, file = if (is.null(opt[['output-file']])) stdout() else opt[['output-file']])
 	q(status = 0)
 }
 
