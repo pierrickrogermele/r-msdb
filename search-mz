@@ -507,7 +507,7 @@ if ( ! is.null(opt[['all-cols']]))
 
 # Check chrom columns
 if ( ! is.null(opt[['check-cols']]) && ! is.null(opt$rtcol)) {
-	dbcols <- db$getChromCol()
+	dbcols <- db$getChromCol()[['id']]
 	unknown.cols <- opt$rtcol[ ! opt$rtcol %in% dbcols]
 	if (length(unknown.cols) > 0) {
 		stop(paste0("Unknown chromatographic column", (if (length(unknown.cols) > 1) 's' else ''), ': ', paste(unknown.cols, collapse = ', '), ".\nAllowed chromatographic column names are:\n", paste(dbcols, collapse = "\n")))
