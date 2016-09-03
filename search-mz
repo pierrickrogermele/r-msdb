@@ -365,9 +365,9 @@ read_args <- function() {
 
 		db <- switch(opt$database,
 		             peakforest = MsPeakForestDb$new(url = opt$url, useragent = USERAGENT, token = opt[['db-token']]),
-		             xls = MsXlsDb(db_dir = opt$url, cache_dir = opt[['cache-dir']]),
-		             '4tabsql' = Ms4TabSqlDb(host = extract.address(opt$url), port = extract.port(opt$url), dbname = opt[['db-name']], user = opt[['db-user']], password = opt[['db-password']]),
-		             file = MsFileDb(file = opt$url),
+		             xls = MsXlsDb$new(db_dir = opt$url, cache_dir = opt[['cache-dir']]),
+		             '4tabsql' = Ms4TabSqlDb$new(host = extract.address(opt$url), port = extract.port(opt$url), dbname = opt[['db-name']], user = opt[['db-user']], password = opt[['db-password']]),
+		             file = MsFileDb$new(file = opt$url),
 		             NULL)
 		db$setPrecursors(precursors)
 		if (db$areDbFieldsSettable())
@@ -390,7 +390,7 @@ output.html <- function(db, main, peaks, file, opt, output.fields) {
 		for (extdb in c(MSDB.TAG.KEGG, MSDB.TAG.HMDB, MSDB.TAG.CHEBI, MSDB.TAG.PUBCHEM)) {
 			field <- output.fields[[extdb]]
 			if (field %in% colnames(peaks))
-				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb, accession = id, content.type = RBIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
+				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb, accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
 		}
 
 	# Write HTML
