@@ -201,7 +201,9 @@ if ( ! is.null(opt[['searchmz-script']]))
 	.g.search.mz.script <<- opt[['searchmz-script']]
 
 # Set db types to test
-dbtypes <- DB.TYPES[DB.TYPES %in% names(opt)]
+dbtypes <- DB.TYPES
+if (is.null(opt[['all']]))
+	dbtypes <- DB.TYPES[DB.TYPES %in% names(opt)]
 
 # Define set of functions
 test.fcts = '^(.+\\.)?test\\..+'
@@ -212,9 +214,9 @@ if ( ! is.null(opt$name))
 
 # Loop on all db types
 to.test <- character()
-if ( ! is.null(opt[['searchmz']]))
+if ( ! is.null(opt[['searchmz']]) || ! is.null(opt[['all']]))
 	to.test <- c(to.test, 'searchmz')
-if ( ! is.null(opt$msdb))
+if ( ! is.null(opt$msdb) || ! is.null(opt[['all']]))
 	to.test <- c(to.test, 'msdb')
 if (length(to.test) > 0)
 	for (type in dbtypes) {
