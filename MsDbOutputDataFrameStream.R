@@ -1,7 +1,6 @@
 if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loaded
 
 	library(methods)
-	library(plyr)
 	source('MsDbOutputStream.R')
 	source('../r-lib/dfhlp.R', chdir = TRUE)
 
@@ -40,6 +39,8 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 	#################
 	
 	MsDbOutputDataFrameStream$methods( matchedPeaks = function(mz, rt = NULL, unused = NULL, peaks = NULL) {
+
+		library(plyr)
 
 		# Set input values
 		x <- data.frame(mz = mz)

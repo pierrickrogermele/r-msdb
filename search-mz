@@ -17,11 +17,16 @@ source(file.path(dirname(script.path), '../r-lib/fshlp.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '../r-biodb/biodb-common.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
 
+# Missing paste0() function in R 2.14.1
+if (as.integer(R.Version()$major) == 2 && as.numeric(R.Version()$minor) < 15)
+	paste0 <- function(...) paste(..., sep = '')
+
 #############
 # CONSTANTS #
 #############
 
 PROG <- sub('^.*/([^/]+)$', '\\1', commandArgs()[4], perl = TRUE)
+USERAGENT <- 'search-mz ; pierrick.roger@gmail.com'
 
 # Authorized database types
 MSDB.XLS <- 'xls'
@@ -187,12 +192,12 @@ make.getopt.spec <- function() {
 		'database',         'd',            1,  'character',    paste0('Set database to use: "xls" for an Excel database, "file" for a single file database, "4tabsql" for a 4Tab SQL database, and "peakforest" for a connection to PeakForest database.'),
 		'url',              NA_character_,  1,  'character',    'URL of database. For "peakforest" database it is the HTTP URL, for the "xls" database it is the path to the directory containing the Excel files, for the "file" database it is the path to the file database and for the "4tabsql" database it is the IP address of the server.',
 		'cache-dir',        NA_character_,  1,  'character',    'Path to directory where to store cache files. Only used when database flag is set to "xls".',
-		'useragent',        NA_character_,  1,  'character',    'User agent. Used by the "Peakforest" database.',
 		'db-name',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
-		'db-user',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
-		'db-password',      NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
+		'db-user',          NA_character_,  1,  'character',    'User of the database. Used by the "4tabsql" database.',
+		'db-password',      NA_character_,  1,  'character',    'Password of the database user. Used by the "4tabsql" database.',
 		'db-fields',        NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the field names to be used in the single file database (option --db-file). Default is "', MSDB.DFT[['db-fields']], '".'),
 		'db-ms-modes',      NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the MS modes to be used in the single file database (option --db-file). Default is "', MSDB.DFT[['db-ms-modes']], '".'),
+		'db-token',         NA_character_,  1,  'character',    'Database token. Used by Peakforest database.',
 		'debug',            NA_character_,  0,  'logical',      'Set debug mode.'
 		)
 
@@ -224,7 +229,7 @@ read_args <- function() {
 
 	# Check values
 	error <- .check.db.conn.opts(opt)
-	if (is.null(opt[['output-file']])) {
+	if (is.null(opt[['output-file']]) && is.null(opt[['list-cols']])) {
 		warning("You must set a path for the output file.")
 		error <- TRUE
 	}
@@ -327,10 +332,6 @@ read_args <- function() {
 				warning("When using PeakForest database, you must specify the URL of the PeakForest server with option --url.")
 				error <- TRUE
 			}
-			if (is.null(opt$useragent)) {
-				warning("When using PeakForest database, you must specify a user agent with option --useragent.")
-				error <- TRUE
-			}
 		}
 	
 		return(error)
@@ -363,10 +364,10 @@ read_args <- function() {
 		}
 
 		db <- switch(opt$database,
-		             peakforest = MsPeakForestDb$new(url = opt$url, useragent = opt$useragent),
-		             xls = MsXlsDb(db_dir = opt$url, cache_dir = opt[['cache-dir']]),
-		             '4tabsql' = Ms4TabSqlDb(host = extract.address(opt$url), port = extract.port(opt$url), dbname = opt[['db-name']], user = opt[['db-user']], password = opt[['db-password']]),
-		             file = MsFileDb(file = opt$url),
+		             peakforest = MsPeakForestDb$new(url = opt$url, useragent = USERAGENT, token = opt[['db-token']]),
+		             xls = MsXlsDb$new(db_dir = opt$url, cache_dir = opt[['cache-dir']]),
+		             '4tabsql' = Ms4TabSqlDb$new(host = extract.address(opt$url), port = extract.port(opt$url), dbname = opt[['db-name']], user = opt[['db-user']], password = opt[['db-password']]),
+		             file = MsFileDb$new(file = opt$url),
 		             NULL)
 		db$setPrecursors(precursors)
 		if (db$areDbFieldsSettable())
@@ -389,7 +390,7 @@ output.html <- function(db, main, peaks, file, opt, output.fields) {
 		for (extdb in c(MSDB.TAG.KEGG, MSDB.TAG.HMDB, MSDB.TAG.CHEBI, MSDB.TAG.PUBCHEM)) {
 			field <- output.fields[[extdb]]
 			if (field %in% colnames(peaks))
-				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb, accession = id, content.type = RBIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
+				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb, accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
 		}
 
 	# Write HTML
@@ -469,7 +470,7 @@ db <- .load.db(opt)
 # Print columns
 if ( ! is.null(opt[['list-cols']])) {
 	cols <- db$getChromCol()
-	df.write.tsv(cols, file = opt[['output-file']])
+	df.write.tsv(cols, file = if (is.null(opt[['output-file']])) stdout() else opt[['output-file']])
 	q(status = 0)
 }
 
@@ -506,7 +507,7 @@ if ( ! is.null(opt[['all-cols']]))
 
 # Check chrom columns
 if ( ! is.null(opt[['check-cols']]) && ! is.null(opt$rtcol)) {
-	dbcols <- db$getChromCol()
+	dbcols <- db$getChromCol()[['id']]
 	unknown.cols <- opt$rtcol[ ! opt$rtcol %in% dbcols]
 	if (length(unknown.cols) > 0) {
 		stop(paste0("Unknown chromatographic column", (if (length(unknown.cols) > 1) 's' else ''), ': ', paste(unknown.cols, collapse = ', '), ".\nAllowed chromatographic column names are:\n", paste(dbcols, collapse = "\n")))

@@ -8,21 +8,24 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	# CLASS DECLARATION #
 	#####################
 	
-	MsPeakForestDb <- setRefClass("MsPeakForestDb", contains = "MsDb", fields = list(.url = "character", .url.scheduler = "ANY"))
+	MsPeakForestDb <- setRefClass("MsPeakForestDb", contains = "MsDb", fields = list(.url = "character", .url.scheduler = "ANY", .token = "character"))
 	
 	###############
 	# CONSTRUCTOR #
 	###############
 	
-	MsPeakForestDb$methods( initialize = function(url = NA_character_, useragent = NA_character_, ...) {
+	MsPeakForestDb$methods( initialize = function(url = NA_character_, useragent = NA_character_, token = NA_character_, ...) {
 
 		# Check URL
 		if (is.null(url) || is.na(url))
 		    stop("No URL defined for new MsPeakForestDb instance.")
 
+		if (substring(url, nchar(url) - 1, 1) == '/')
+			url <- substring(url, nchar(url) - 1)
 		.url <<- url
 		.url.scheduler <<- UrlRequestScheduler$new(n = 3, useragent = useragent)
 		.self$.url.scheduler$setVerbose(1L)
+		.token <<- token
 
 		callSuper(...)
 	})
@@ -35,6 +38,17 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		res <- NULL
 
+		# Add url prefix
+		if (substring(url, 1, 1) == '/')
+			url <- substring(url, 2)
+		url <- paste(.self$.url, url, sep = '/')
+
+		# Add token
+		if ( ! is.na(.self$.token))
+			params <- c(params, token = .self$.token)
+				param.str <- if (is.null(params)) '' else paste('?', vapply(names(params), function(p) paste(p, params[[p]], sep = '='), FUN.VALUE = ''), collapse = '&', sep = '')
+
+		# Get URL
 		content <- .self$.url.scheduler$getUrl(url = url, params = params)
 
 		if (ret.type == 'json') {
@@ -67,7 +81,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	
 	MsPeakForestDb$methods( getMoleculeIds = function() {
 
-		ids <- as.character(.self$.get.url(url = paste0(.self$.url, 'compounds/all/ids')))
+		ids <- as.character(.self$.get.url(url = 'compounds/all/ids'))
 
 		return(ids)
 	})
@@ -78,7 +92,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	
 	MsPeakForestDb$methods( getNbMolecules = function() {
 
-		n <- .self$.get.url(url = paste0(.self$.url, 'compounds/all/count'), ret.type = 'integer')
+		n <- .self$.get.url(url = 'compounds/all/count', ret.type = 'integer')
 
 		return(n)
 	})
@@ -90,13 +104,12 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	MsPeakForestDb$methods( getChromCol = function(molid = NULL) {
 
 		# Set URL
-		url <- paste0(.self$.url, 'metadata/lc/list-code-columns')
 		params <- NULL
 		if ( ! is.null(molid))
 			params <- list(molids = paste(molid, collapse = ','))
 
 		# Call webservice
-		wscols <- .self$.get.url(url = url, params = params)
+		wscols <- .self$.get.url(url = 'metadata/lc/list-code-columns', params = params)
 
 		# Build data frame
 		cols <- data.frame(id = character(), title = character())
@@ -118,13 +131,12 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		rt <- list()
 
 		# Set URL
-		url <- paste0(.self$.url, 'spectra/lcms/search')
 		params <- NULL
 		if ( ! is.null(molid))
 			params <- list(molids = paste(molid, collapse = ','))
 
 		# Call webservice
-		spectra <- .self$.get.url(url = url, params = params)
+		spectra <- .self$.get.url(url = 'spectra/lcms/search', params = params)
 		if (class(spectra) == 'list' && length(spectra) > 0) {
 			for (s in spectra)
 				if (is.na(col) || s$liquidChromatography$columnCode %in% col) {
@@ -160,11 +172,10 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		if (length(non.na.molid) > 0) {
 			# Set URL
-			url <- paste0(.self$.url, 'compounds/all/names')
 			params <- c(molids = paste(non.na.molid, collapse = ','))
 
 			# Call webservice
-			names[ ! is.na(molid)] <- .self$.get.url(url = url, params = params)
+			names[ ! is.na(molid)] <- .self$.get.url(url = 'compounds/all/names', params = params)
 		}
 
 		return(names)
@@ -187,8 +198,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 				ids <- c(ids, NA_character_)
 
 			else {
-				url <- paste0(.self$.url, 'search/compounds/name/', curlEscape(n))
-				compounds <- .self$.get.url(url = url)$compoundNames
+				compounds <- .self$.get.url(url = paste0('search/compounds/name/', curlEscape(n)))$compoundNames
 				ids <- c(ids, list(vapply(compounds, function(c) as.character(c$compound$id), FUN.VALUE = '')))
 			}
 		}
@@ -203,7 +213,6 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	MsPeakForestDb$methods( getNbPeaks = function(molid = NA_integer_, type = NA_character_) {
 
 		# Build URL
-		url <- paste0(.self$.url, 'spectra/lcms/count-peaks')
 		params <- NULL
 		if ( ! is.na(type))
 			params <- c(params, mode = if (type == MSDB.TAG.POS) 'pos' else 'neg')
@@ -211,7 +220,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 			params <- c(params, molids = paste(molid, collapse = ','))
 
 		# Run request
-		n <- .self$.get.url(url = url, params = params, ret.type = 'integer')
+		n <- .self$.get.url(url = 'spectra/lcms/count-peaks', params = params, ret.type = 'integer')
 
 		return(sum(n))
 	})
@@ -222,16 +231,13 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	
 	MsPeakForestDb$methods( getMzValues = function(mode = NULL, max.results = NA_integer_) {
 
-		# Build URL
-		url <- paste0(.self$.url, 'spectra/lcms/peaks/list-mz')
-
 		# Query params
 		params <- NULL
 		if ( ! is.null(mode))
 			params <- c(params, mode = if (mode == MSDB.TAG.POS) 'positive' else 'negative')
 
-		# Get MZ values
-		mz <- .self$.get.url(url = url, params = params)
+		# Get MZ valuels
+		mz <- .self$.get.url(url = 'spectra/lcms/peaks/list-mz', params = params)
 
 		# Apply cut-off
 		if ( ! is.na(max.results))
@@ -247,7 +253,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	MsPeakForestDb$methods( .do.search.for.mz.rt.bounds = function(mode, mz.low, mz.high, rt.low = NULL, rt.high = NULL, col = NULL, attribs = NULL, molids = NULL) {
 
 		# Build URL for mz search
-		url <- paste0(.self$.url, 'spectra/lcms/peaks/get-range/', mz.low, '/', mz.high)
+		url <- paste0('spectra/lcms/peaks/get-range/', mz.low, '/', mz.high)
 
 		# Get spectra
 		spectra <- .self$.get.url(url = url)
@@ -269,7 +275,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 			if (nrow(results) > 0) {
 				# Build URL for rt search
-				url <- paste0(.self$.url, 'spectra/lcms/range-rt-min/', rt.low, '/', rt.high)
+				url <- paste0('spectra/lcms/range-rt-min/', rt.low, '/', rt.high)
 				params <- NULL
 				if ( ! is.null(col))
 					params <- c(columns = paste(col, collapse = ','))
