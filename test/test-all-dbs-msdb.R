@@ -74,7 +74,7 @@ long.test.peaks <- function() {
 	molids <- get.db()$getMoleculeIds()
 	for (i in molids) {
 		if (get.db()$getNbPeaks(molid = i) > 0) {
-			checkTrue(get.db()$getNbPeaks(molid = i, type = MSDB.TAG.POS) > 0 || get.db()$getNbPeaks(molid = i, type = MSDB.TAG.NEG) > 0)
+			checkTrue(get.db()$getNbPeaks(molid = i, mode = MSDB.TAG.POS) > 0 || get.db()$getNbPeaks(molid = i, mode = MSDB.TAG.NEG) > 0)
 			break;
 		}
 	}
