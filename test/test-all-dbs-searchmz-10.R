@@ -123,12 +123,18 @@ test.same.rows.with.peaks.output <- function() {
 }
 
 zlong.test.peak.output.file <- function() {
-	call.search.mz(c('-m pos', '-c uplc-c8,uplc-c18', '--rttolx 5', '--rttoly 0.8', '-i', 'mzrt-input.tsv', '-o', 'mzrt-output.tsv', '--same-rows', '--peak-output-file', 'mzrt-output-peaks.tsv'))
+	peak.output.file <- 'mzrt-output-peaks.tsv'
+	output.file <- 'mzrt-output.tsv'
+	call.search.mz(c('-m pos', '-c uplc-c8,uplc-c18', '--rttolx 5', '--rttoly 0.8', '-i', 'mzrt-input.tsv', '-o', output.file, '--same-rows', '--peak-output-file', peak.output.file))
 	x <- read.table(get.res.path('mzrt-input.tsv'), header = TRUE)
 	y <- read.table(get.res.path('mzrt-output.tsv'), header = TRUE)
 	z <- read.table(get.res.path('mzrt-output-peaks.tsv'), header = TRUE)
+	x.out <- read.table(output.file, header = TRUE)
+	x.out.peak <- read.table(peak.output.file, header = TRUE)
 	checkTrue(nrow(x) == nrow(y))
-	checkTrue(all(c('molid', 'mz', 'rt', 'col', 'colrt', 'attr', 'comp') %in% colnames(z)))
+	checkTrue(all(colnames(x) %in% colnames(z)))
+	checkTrue(all(colnames(x.out) %in% colnames(z)))
+	checkTrue(all(c(MSDB.TAG.MOLID, MSDB.TAG.MZ, MSDB.TAG.RT, MSDB.TAG.COL, MSDB.TAG.COLRT, MSDB.TAG.ATTR, MSDB.TAG.COMP) %in% colnames(z)))
 }
 
 test.peak.output.file <- function() {

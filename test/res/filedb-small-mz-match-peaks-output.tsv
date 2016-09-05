@@ -1,4 +1,4 @@
-"mz"	"molid"	"mode"	"mztheo"	"comp"	"attr"	"molcomp"	"molmass"	"molnames"
+"mz"	"compoundid"	"msmode"	"mztheo"	"peakcomp"	"peakattr"	"compoundcomp"	"compoundmass"	"fullnames"
 80.04959021	"U761"	"POS"	80.049475	"P9Z5W46 O0"	"[(M+H)-(NHCO)]+"	"J16L6M62O"	122.04801	"Coquelicol;Paquerettol"
 82.04819461	NA	NA	NA	NA	NA	NA	NA	NA
 83.01343941	NA	NA	NA	NA	NA	NA	NA	NA
