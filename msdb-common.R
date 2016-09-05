@@ -2,38 +2,40 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 
 	library('stringr')
 	source('../r-lib/strhlp.R', chdir = TRUE)
+	source('../r-biodb/biodb-common.R', chdir = TRUE)
 
 	#############
 	# CONSTANTS #
 	#############
 
 	# Field tags
-	MSDB.TAG.MZ <- 'mz'
-	MSDB.TAG.MZEXP <- 'mzexp'
-	MSDB.TAG.MZTHEO <- 'mztheo'
-	MSDB.TAG.RT <- 'rt'
-	MSDB.TAG.MODE <- 'mode'
-	MSDB.TAG.MOLID <- 'molid'
-	MSDB.TAG.COL <- 'col'
-	MSDB.TAG.COLRT <- 'colrt'
-	MSDB.TAG.ATTR <- 'attr'
-	MSDB.TAG.INT <- 'int' # Absolute intensity
-	MSDB.TAG.REL <- 'rel' # Relative intensity
-	MSDB.TAG.COMP <- 'comp'
-	MSDB.TAG.MOLNAMES <- 'molnames'
-	MSDB.TAG.MOLCOMP <- 'molcomp'
-	MSDB.TAG.MOLATTR <- 'molattr'
-	MSDB.TAG.MOLMASS <- 'molmass'
-	MSDB.TAG.INCHI <- 'inchi'
-	MSDB.TAG.INCHIKEY <- 'inchikey'
+	MSDB.TAG.MZ <- BIODB.PEAK.MZ
+	MSDB.TAG.MZEXP <- BIODB.PEAK.MZEXP
+	MSDB.TAG.MZTHEO <- BIODB.PEAK.MZTHEO
+	MSDB.TAG.RT <- BIODB.PEAK.RT
+	MSDB.TAG.MODE <- BIODB.MSMODE
+	MSDB.TAG.MOLID <- BIODB.COMPOUND.ID
+	MSDB.TAG.COL <- BIODB.CHROM.COL
+	MSDB.TAG.COLRT <- BIODB.CHROM.COL.RT
+	MSDB.TAG.ATTR <- BIODB.PEAK.ATTR
+	MSDB.TAG.INT <- BIODB.PEAK.INTENSITY
+	MSDB.TAG.REL <- BIODB.PEAK.RELATIVE.INTENSITY
+	MSDB.TAG.COMP <- BIODB.PEAK.FORMULA
+	MSDB.TAG.MOLNAMES <- BIODB.FULLNAMES
+	MSDB.TAG.MOLCOMP <- BIODB.COMPOUND.MASS
+#	MSDB.TAG.MOLATTR <- 'molattr'
+	MSDB.TAG.MOLMASS <- BIODB.COMPOUND.COMP
+	MSDB.TAG.INCHI <- BIODB.INCHI
+	MSDB.TAG.INCHIKEY <- BIODB.INCHIKEY
+	# TODO Use BIODB tags.
 	MSDB.TAG.PUBCHEM <- 'pubchem'
 	MSDB.TAG.CHEBI <- 'chebi'
 	MSDB.TAG.HMDB <- 'hmdb'
 	MSDB.TAG.KEGG <- 'kegg'
 
 	# Mode tags
-	MSDB.TAG.POS           <- 'ms.pos'
-	MSDB.TAG.NEG           <- 'ms.neg'
+	MSDB.TAG.POS           <- BIODB.MSMODE.NEG
+	MSDB.TAG.NEG           <- BIODB.MSMODE.POS
 
 	# Fields containing multiple values
 	MSDB.MULTIVAL.FIELDS <- c(MSDB.TAG.MOLNAMES)

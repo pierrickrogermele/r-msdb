@@ -39,23 +39,23 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 	MsBioDb$methods( getNbMolecules = function() {
 		return(.self$.massdb$getNbEntries(type = BIODB.COMPOUND))
 	})
-	
+
 	#################
 	# GET MZ VALUES #
 	#################
-	
+
 	MsBioDb$methods( getMzValues = function(mode = NULL, max.results = NA_integer_) {
-		return(.self$.massdb$getMzValues(mode = if (mode == MSDB.TAG.NEG) BIODB.MSMODE.NEG else BIODB.MSMODE.POS), max.results = max.results)
+		return(.self$.massdb$getMzValues(mode = mode, max.results = max.results))
 	})
-	
+
 	#####################
 	# GET MOLECULE NAME #
 	#####################
-	
+
 	MsBioDb$methods( getMoleculeName = function(molid) {
 		return(.self$.massdb$getMoleculeName(molid))
 	})
-	
+
 	###############################
 	# GET CHROMATOGRAPHIC COLUMNS #
 	###############################
@@ -85,7 +85,7 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 	################
 	
 	MsBioDb$methods( getNbPeaks = function(molid = NA_integer_, mode = NA_character_) {
-		return(.self$.massdb$getNbPeaks(molid, mode = if (mode == MSDB.TAG.NEG) BIODB.MSMODE.NEG else BIODB.MSMODE.POS))
+		return(.self$.massdb$getNbPeaks(compound.ids = molid, mode = mode))
 	})
 
 }
