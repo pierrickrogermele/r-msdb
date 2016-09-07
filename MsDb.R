@@ -135,11 +135,20 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	})
 
 	####################
+	# HANDLE COMPOUNDS #
+	####################
+	
+	# Returns TRUE if this database handles compounds directly (by IDs)
+	MsDb$methods( handleCompounds = function() {
+		return(TRUE)
+	})
+
+	####################
 	# GET MOLECULE IDS #
 	####################
 	
 	# Returns an integer vector of all molecule IDs stored inside the database.
-	MsDb$methods( getMoleculeIds = function() {
+	MsDb$methods( getMoleculeIds = function(max.results = NA_integer_) {
 		stop("Method getMoleculeIds() not implemented in concrete class.")
 	})
 

@@ -3,14 +3,18 @@ source(file.path(dirname(script.path), '..', 'MsDbOutputDataFrameStream.R'), chd
 source(file.path(dirname(script.path), '..', 'msdb-common.R'), chdir = TRUE)
 
 test.10.all.mol.ids <- function() {
-	molids <- get.db()$getMoleculeIds()
-	checkTrue(length(molids) > 0)
-	checkTrue( all( ! duplicated(molids)))
+	if (get.db()$handleCompounds()) {
+		molids <- get.db()$getMoleculeIds(max.results = 10)
+		checkTrue(length(molids) > 0)
+		checkTrue( all( ! duplicated(molids)))
+	}
 }
 
 test.15.nb.mols <- function() {
-	checkTrue(get.db()$getNbMolecules() > 0)
-	checkTrue(get.db()$getNbMolecules() == length(get.db()$getMoleculeIds()))
+	if (get.db()$handleCompounds()) {
+		checkTrue(get.db()$getNbMolecules() > 0)
+		checkTrue(get.db()$getNbMolecules() == length(get.db()$getMoleculeIds()))
+	}
 }
 
 test.mol.names <- function() {
@@ -54,9 +58,14 @@ test.columns <- function() {
 	checkTrue(nrow(cols) > 0)
 	checkTrue('id' %in% colnames(cols))
 	checkTrue('title' %in% colnames(cols))
-	molids <- get.db()$getMoleculeIds()
-	cols <- get.db()$getChromCol(molids[1:100])
-	checkTrue(nrow(cols) >= 0)
+}
+
+test.columns.molid <- function() {
+	if (get.db()$handleCompounds()) {
+		molids <- get.db()$getMoleculeIds()
+		cols <- get.db()$getChromCol(molids[1:100])
+		checkTrue(nrow(cols) >= 0)
+	}
 }
 
 test.peaks <- function() {

@@ -25,11 +25,19 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 	})
 
 	####################
+	# HANDLE COMPOUNDS #
+	####################
+	
+	MsBioDb$methods( handleCompounds = function() {
+		return(.self$.massdb$handlesEntryType(BIODB.COMPOUND))
+	})
+
+	####################
 	# GET MOLECULE IDS #
 	####################
 	
-	MsBioDb$methods( getMoleculeIds = function() {
-		return(.self$.massdb$getEntryIds(type = BIODB.COMPOUND))
+	MsBioDb$methods( getMoleculeIds = function(max.results = NA_integer_) {
+		return(.self$.massdb$getEntryIds(type = BIODB.COMPOUND, max.results = max.results))
 	})
 
 	####################
