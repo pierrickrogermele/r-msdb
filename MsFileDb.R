@@ -151,7 +151,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 	# GET MOLECULE IDS #
 	####################
 	
-	MsFileDb$methods( getMoleculeIds = function() {
+	MsFileDb$methods( getMoleculeIds = function(max.results = NA_integer_) {
 	
 		# Init db
 		.self$.init.db()
@@ -160,6 +160,10 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 		mol.ids <- as.character(.self$.get.col(MSDB.TAG.MOLID))
 		mol.ids <- mol.ids[ ! duplicated(mol.ids)]
 		mol.ids <- sort(mol.ids)
+
+		# Cut results
+		if ( ! is.na(max.results) && length(mol.ids) > max.results)
+			mol.ids <- mol.ids[1:max.results]
 
 		return(mol.ids)
 	})
