@@ -1,3 +1,5 @@
+# vi: fdm=marker
+
 source(file.path(dirname(script.path), '..', 'MsDbInputDataFrameStream.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'MsDbOutputDataFrameStream.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'msdb-common.R'), chdir = TRUE)
@@ -225,6 +227,49 @@ test.search.mzrt <- function() {
 
 						return(NULL) # Make test not too long: stop at the first mz whose compound has retention times.
 					}
+			}
+		}
+	}
+}
+
+# Test precursor search mz {{{1
+################################################################
+
+test.precursor.search.mz <- function() {
+
+	# Get some mzvals
+	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 100)
+	checkTrue(length(mzvals) <= 100)
+
+	# Loop on all mz values obtained
+	for (mz in mzvals) {
+		if ( ! is.na(mz)) {
+
+			# Search with this mz
+			r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5, shift = 0)
+			checkTrue(nrow(r) >= 1)
+			checkTrue(MSDB.TAG.ATTR %in% colnames(r))
+			checkTrue(class(r[[MSDB.TAG.ATTR]]) == 'character')
+			print(r)
+
+			# Loop on all peak attributions
+			for (attr in r[[MSDB.TAG.ATTR]]) {
+
+				# Search with this mz and the attribution as restriction
+				r2 <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5, shift = 0, attribs = attr)
+				checkTrue(nrow(r2) >= 1)
+				checkTrue(MSDB.TAG.ATTR %in% colnames(r2))
+				checkTrue(all(r2[[MSDB.TAG.ATTR]] == attr))
+				print(r2)
+
+				# Search with this mz and the attribution as precursor
+				new.prec <- list()
+				new.prec[[MSDB.TAG.POS]] <- c(attr)
+				new.prec[[MSDB.TAG.NEG]] <- character(0)
+				get.db()$setPrecursors(new.prec)
+				r3 <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz), mode = MSDB.TAG.POS, prec = 5, shift = 0, precursor.match = TRUE)
+				checkTrue(nrow(r3) >= 1)
+				checkTrue(MSDB.TAG.ATTR %in% colnames(r3))
 			}
 		}
 	}
