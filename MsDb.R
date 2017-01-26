@@ -271,7 +271,6 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 
 			# Get all matching peaks whose molecule is inside the previously obtained list of molecules
 			df <- .self$.doSearchForMzRtList(mode = mode, shift = shift, prec = prec, col = col, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, molids = precursors.ids, molids.rt.tol = precursor.rt.tol, same.cols = same.cols, same.rows = same.rows, peak.table = peak.table)
-			print(df)
 # TODO 
 #
 #			peaks <- if (peak.table) results[['peaks']] else results
@@ -354,6 +353,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 
 		# Loop on all lines of input
 		peaks <- NULL
+		.self$.input.stream$reset()
 		while (.self$.input.stream$hasNextValues()) {
 
 			.self$.input.stream$nextValues()

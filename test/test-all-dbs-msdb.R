@@ -238,8 +238,8 @@ test.search.mzrt <- function() {
 test.precursor.search.mz <- function() {
 
 	# Get some mzvals
-	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 100)
-	checkTrue(length(mzvals) <= 100)
+	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 10)
+	checkTrue(length(mzvals) <= 10)
 
 	# Loop on all mz values obtained
 	for (mz in mzvals) {
@@ -250,7 +250,6 @@ test.precursor.search.mz <- function() {
 			checkTrue(nrow(r) >= 1)
 			checkTrue(MSDB.TAG.ATTR %in% colnames(r))
 			checkTrue(class(r[[MSDB.TAG.ATTR]]) == 'character')
-			print(r)
 
 			# Loop on all peak attributions
 			for (attr in r[[MSDB.TAG.ATTR]]) {
@@ -260,7 +259,6 @@ test.precursor.search.mz <- function() {
 				checkTrue(nrow(r2) >= 1)
 				checkTrue(MSDB.TAG.ATTR %in% colnames(r2))
 				checkTrue(all(r2[[MSDB.TAG.ATTR]] == attr))
-				print(r2)
 
 				# Search with this mz and the attribution as precursor
 				new.prec <- list()

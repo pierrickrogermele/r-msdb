@@ -82,4 +82,12 @@ if ( ! exists('MsDbInputDataFrameStream')) { # Do not load again if already load
 		return(.self$.i < nrow(.self$.df))
 	})
 
+	#########
+	# RESET #
+	#########
+
+	MsDbInputDataFrameStream$methods( reset = function() {
+		.i <<- 0L
+	})
+
 } # end of load safe guard
