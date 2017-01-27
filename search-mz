@@ -408,6 +408,7 @@ output.html <- function(db, main, peaks, file, opt, output.fields) {
 	html <- HtmlWriter(file = file)
 	html$writeBegTag('html')
 	html$writeBegTag('header')
+	html$writeTag('meta', attr = c(charset = "UTF-8"))
 	html$writeTag('title', text = "LC/MS matching results")
 	html$writeBegTag('style')
 	html$write('table, th, td { border-collapse: collapse; }')
@@ -425,20 +426,20 @@ output.html <- function(db, main, peaks, file, opt, output.fields) {
 	# Write parameters
 	html$writeTag('h2', text = "Parameters")
 	html$writeBegTag('ul')
-	html$writeTag('li', paste0("Mode = ", opt$mode, "."))
-	html$writeTag('li', paste0("M/Z precision = ", opt$mzprec, "."))
-	html$writeTag('li', paste0("M/Z shift = ", opt$mzshift, "."))
-	html$writeTag('li', paste0("Precursor match = ", (if (is.null(opt[['precursor-match']])) "no" else "yes"), "."))
+	html$writeTag('li', text = paste0("Mode = ", opt$mode, "."))
+	html$writeTag('li', text = paste0("M/Z precision = ", opt$mzprec, "."))
+	html$writeTag('li', text = paste0("M/Z shift = ", opt$mzshift, "."))
+	html$writeTag('li', text = paste0("Precursor match = ", (if (is.null(opt[['precursor-match']])) "no" else "yes"), "."))
 	if ( ! is.null(opt[['precursor-match']])) {
-		html$writeTag('li', paste0("Positive precursors = ", paste0(opt[['pos-prec']], collapse = ', '), "."))
-		html$writeTag('li', paste0("Negative precursors = ", paste0(opt[['neg-prec']], collapse = ', '), "."))
+		html$writeTag('li', text = paste0("Positive precursors = ", paste0(opt[['pos-prec']], collapse = ', '), "."))
+		html$writeTag('li', text = paste0("Negative precursors = ", paste0(opt[['neg-prec']], collapse = ', '), "."))
 	}
 	if ( ! is.null(opt$rtcol)) {
-		html$writeTag('li', paste0("Columns = ", paste(opt$rtcol, collapse = ", "), "."))
-		html$writeTag('li', paste0("RTX = ", opt$rttolx, "."))
-		html$writeTag('li', paste0("RTY = ", opt$rttoly, "."))
+		html$writeTag('li', text = paste0("Columns = ", paste(opt$rtcol, collapse = ", "), "."))
+		html$writeTag('li', text = paste0("RTX = ", opt$rttolx, "."))
+		html$writeTag('li', text = paste0("RTY = ", opt$rttoly, "."))
 		if ( ! is.null(opt[['precursor-match']]))
-			html$writeTag('li', paste0("RTZ = ", opt[['precursor-rt-tol']], "."))
+			html$writeTag('li', text = paste0("RTZ = ", opt[['precursor-rt-tol']], "."))
 	}
 	html$writeEndTag('ul')
 
