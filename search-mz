@@ -386,12 +386,23 @@ read_args <- function() {
 output.html <- function(db, main, peaks, file, opt, output.fields) {
 
 	# Replace public database IDs by URLs
-	if ( ! is.null(peaks))
+	if ( ! is.null(peaks) || ! is.null(main)) {
+		# Conversion from extdb id field to extdb name
+		extdb2classdb = list()
+		extdb2classdb[MSDB.TAG.KEGG] = BIODB.KEGG
+		extdb2classdb[MSDB.TAG.HMDB] = BIODB.HMDB
+		extdb2classdb[MSDB.TAG.CHEBI] = BIODB.CHEBI
+		extdb2classdb[MSDB.TAG.PUBCHEM] = BIODB.PUBCHEM
+
+		# Loop on all dbs
 		for (extdb in c(MSDB.TAG.KEGG, MSDB.TAG.HMDB, MSDB.TAG.CHEBI, MSDB.TAG.PUBCHEM)) {
 			field <- output.fields[[extdb]]
-			if (field %in% colnames(peaks))
-				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb, accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
+			if ( ! is.null(peaks) && field %in% colnames(peaks))
+				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb2classdb[[extdb]], accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
+			if ( ! is.null(main) && field %in% colnames(main))
+				main[[field]] <- vapply(main[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb2classdb[[extdb]], accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
 		}
+	}
 
 	# Write HTML
 	html <- HtmlWriter(file = file)

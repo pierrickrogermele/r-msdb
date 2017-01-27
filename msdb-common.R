@@ -28,10 +28,10 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 	MSDB.TAG.INCHI <- BIODB.INCHI
 	MSDB.TAG.INCHIKEY <- BIODB.INCHIKEY
 	# TODO Use BIODB tags.
-	MSDB.TAG.PUBCHEM <- 'pubchem'
-	MSDB.TAG.CHEBI <- 'chebi'
-	MSDB.TAG.HMDB <- 'hmdb'
-	MSDB.TAG.KEGG <- 'kegg'
+	MSDB.TAG.PUBCHEM <- BIODB.PUBCHEM.ID
+	MSDB.TAG.CHEBI <- BIODB.CHEBI.ID
+	MSDB.TAG.HMDB <- BIODB.HMDB.ID
+	MSDB.TAG.KEGG <- BIODB.KEGG.ID
 
 	# Mode tags
 	MSDB.TAG.POS           <- BIODB.MSMODE.NEG
