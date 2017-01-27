@@ -84,6 +84,16 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 			# Load database
 			.db <<- read.table(.self$.file, sep = "\t", quote = "\"", header = TRUE, stringsAsFactors = FALSE, row.names = NULL)
 
+			# Check that colnames are unique
+			dupcol <- duplicated(colnames(.self$.db))
+			if (any(dupcol))
+				stop(paste("Database header contains duplicated names: ", paste(unique(colnames(.self$.db)[dupcol]), collapse = ', '), "."))
+
+			# Check that columns names supplied through field map are unique
+			dupfields <- duplicated(.self$.fields)
+			if (any(dupfields))
+				stop(paste("Some db column names supplied are duplicated: ", paste(unique(.self$.fields[dupfields]), collapse = ', '), "."))
+
 			# Rename columns
 			colnames(.self$.db) <- vapply(colnames(.self$.db), function(c) if (c %in% .self$.fields) names(.self$.fields)[.self$.fields %in% c] else c, FUN.VALUE = '')
 		}

@@ -10,3 +10,5 @@ filedb-*.tsv
 mz-input*.tsv
 mzrt-input-*.tsv
 !res/*
+*-main.tsv
+*-peak.tsv
