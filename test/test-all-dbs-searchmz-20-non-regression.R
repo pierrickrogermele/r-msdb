@@ -5,6 +5,37 @@ test.match.mz.no.y.col.in.output <- function() {
 	checkTrue( ! 'y' %in% colnames(df))
 }
 
+# 2017-01-18 Failure encountered on Galaxy production instance (lcmsmatching version 2.1.3) with Florence Castelli
+test.2017.01.18.florence.castelli <- function() {
+
+	res.name <- '2017-01-18-florence-castelli'
+	res.dir <- file.path(dirname(script.path), 'res', res.name)
+	main.output <- file.path(dirname(script.path), paste(res.name, 'main.tsv', sep = '-'))
+	peak.output <- file.path(dirname(script.path), paste(res.name, 'peak.tsv', sep = '-'))
+	html.output <- file.path(dirname(script.path), paste(res.name, 'html', sep = '.'))
+
+	call.search.mz(c('-d', 'file',
+	                 '--url', file.path(res.dir, 'db.tsv'),
+	                 '--db-fields', "mztheo=mztheo,chromcolrt=colrt,compoundid=molid,chromcol=col,msmode=mode,peakattr=attr,peakcomp=comp,fullnames=molnames,compoundmass=molmass,compoundcomp=molcomp,inchi=inchi,inchikey=inchikey,pubchemid=pubchem,chebiid=chebi,hmdbid=hmdb,keggid=kegg",
+					 '--db-ms-modes', 'pos=POS,neg=NEG',
+	                 '-i', file.path(res.dir, 'input.tsv'),
+	                 '--input-col-names', 'mz=mz,rt=rt',
+	                 '-m', 'neg',
+	                 '-p', '10.0',
+	                 '-s', '0.0',
+	                 '-c', "zicphilic-150*5*2.1-42min-shimadzuexactive",
+	                 '-x', '5.0',
+	                 '-y', '0.8',
+	                 '--precursor-match',
+	                 '--precursor-rt-tol', '5.0',
+	                 '--pos-prec', "'[(M+H)]+,[M+H]+,[(M+Na)]+,[M+Na]+,[(M+K)]+,[M+K]+'",
+					 '--neg-prec', "'[(M-H)]-,[M-H]-,[(M+Cl)]-,[M+Cl]-'",
+					 '-o', main.output,
+					 '--peak-output-file', peak.output,
+					 '--html-output-file', html.output
+					 ), use.global.conn.flags = FALSE)
+}
+
 # Test bug replacing values of columns by integers
 test.2017.01.26.w4m.sacurine.phenomenal.demo <- function() {
 
