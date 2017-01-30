@@ -12,7 +12,8 @@ source(file.path(dirname(script.path), '..', 'Ms4TabSqlDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'MsBioDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', '..', 'r-lib', 'strhlp.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '..', '..', 'r-biodb', 'BiodbFactory.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', '..', 'r-biodb', 'R', 'BiodbObject.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '..', '..', 'r-biodb', 'R', 'BiodbFactory.R'), chdir = TRUE)
 
 #############
 # CONSTANTS #

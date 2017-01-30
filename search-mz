@@ -403,7 +403,7 @@ output.html <- function(db, main, peaks, file, opt, output.fields) {
 		extdb2classdb[MSDB.TAG.KEGG] = BIODB.KEGG
 		extdb2classdb[MSDB.TAG.HMDB] = BIODB.HMDB
 		extdb2classdb[MSDB.TAG.CHEBI] = BIODB.CHEBI
-		extdb2classdb[MSDB.TAG.PUBCHEM] = BIODB.PUBCHEM
+		extdb2classdb[MSDB.TAG.PUBCHEM] = BIODB.PUBCHEMCOMP
 
 		# Loop on all dbs
 		for (extdb in c(MSDB.TAG.KEGG, MSDB.TAG.HMDB, MSDB.TAG.CHEBI, MSDB.TAG.PUBCHEM)) {

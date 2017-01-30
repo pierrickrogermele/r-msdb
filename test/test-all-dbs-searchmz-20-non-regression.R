@@ -16,7 +16,7 @@ test.2017.01.18.florence.castelli <- function() {
 
 	call.search.mz(c('-d', 'file',
 	                 '--url', file.path(res.dir, 'db.tsv'),
-	                 '--db-fields', "mztheo=mztheo,chromcolrt=colrt,compoundid=molid,chromcol=col,msmode=mode,peakattr=attr,peakcomp=comp,fullnames=molnames,compoundmass=molmass,compoundcomp=molcomp,inchi=inchi,inchikey=inchikey,pubchemid=pubchem,chebiid=chebi,hmdbid=hmdb,keggid=kegg",
+	                 '--db-fields', "mztheo=mztheo,chromcolrt=colrt,compoundid=molid,chromcol=col,msmode=mode,peakattr=attr,peakcomp=comp,fullnames=molnames,compoundmass=molmass,compoundcomp=molcomp,inchi=inchi,inchikey=inchikey,pubchemcompid=pubchem,chebiid=chebi,hmdbid=hmdb,keggid=kegg",
 					 '--db-ms-modes', 'pos=POS,neg=NEG',
 	                 '-i', file.path(res.dir, 'input.tsv'),
 	                 '--input-col-names', 'mz=mz,rt=rt',
@@ -52,7 +52,7 @@ test.2017.01.26.w4m.sacurine.phenomenal.demo <- function() {
 
 	call.search.mz(c('-d', 'file',
 					 '--url', file.path(res.dir, 'massbank-neg-ms1-peaks.tsv'),
-					 '--db-fields', 'mztheo=peak.mz,chromcolrt=chromcolrt,compoundid=accession,chromcol=chromcol,msmode=msmode,peakcomp=peak.formula,fullnames=name,compoundmass=mass,compoundcomp=formula,inchi=inchi,inchikey=inchikey,pubchemid=pubchemcompid,chebiid=chebiid,hmdbid=hmdbid,keggid=keggid',
+					 '--db-fields', 'mztheo=peak.mz,chromcolrt=chromcolrt,compoundid=accession,chromcol=chromcol,msmode=msmode,peakcomp=peak.formula,fullnames=name,compoundmass=mass,compoundcomp=formula,inchi=inchi,inchikey=inchikey,pubchemcompid=pubchemcompid,chebiid=chebiid,hmdbid=hmdbid,keggid=keggid',
 					 '--db-ms-modes', 'pos=pos,neg=neg',
 					 '-i', input,
 					 '--input-col-names', 'mz=mass_to_charge,rt=retention_time',
