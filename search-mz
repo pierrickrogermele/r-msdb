@@ -14,7 +14,7 @@ source(file.path(dirname(script.path), 'MsDbOutputDataFrameStream.R'), chdir = T
 source(file.path(dirname(script.path), '../r-lib/htmlhlp.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '../r-lib/strhlp.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '../r-lib/fshlp.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-biodb/biodb-common.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-biodb/R/biodb-common.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
 
 # Missing paste0() function in R 2.14.1
@@ -49,10 +49,11 @@ MSDB.DFT[['precursor-rt-tol']] <- 5
 MSDB.DFT[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())
 MSDB.DFT[['db-ms-modes']] <- concat.kv.list(MSDB.DFT.MODES)
-#MSDB.DFT[['input-col-names']] <- concat.kv.list(msdb.get.dft.input.fields())
-#MSDB.DFT[['output-col-names']] <- concat.kv.list(msdb.get.dft.output.fields())
 MSDB.DFT[['pos-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
 MSDB.DFT[['neg-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
+DEFAULT.ARG.VALUES <- MSDB.DFT
+DEFAULT.ARG.VALUES[['input-col-names']] <- concat.kv.list(msdb.get.dft.input.fields())
+DEFAULT.ARG.VALUES[['output-col-names']] <- concat.kv.list(msdb.get.dft.output.fields())
 
 ##############
 # PRINT HELP #
@@ -146,7 +147,7 @@ parse.arg.val <- function(opt) {
 
 print.dft.arg.val <- function(opt) {
 
-	print.flags <- MSDB.DFT
+	print.flags <- DEFAULT.ARG.VALUES
 	names(print.flags) <- vapply(names(print.flags), function(x) paste0('print-', x), FUN.VALUE = '')
 	for (f in names(print.flags))
 		if ( ! is.null(opt[[f]])) {
@@ -159,7 +160,7 @@ make.getopt.spec.print.dft <- function() {
 
 	spec <- character()
 
-	for (f in names(MSDB.DFT))
+	for (f in names(DEFAULT.ARG.VALUES))
 		spec <- c(spec, paste0('print-', f), NA_character_, 0, 'logical', paste0('Print default value of --', f))
 
 	return(spec)
@@ -194,8 +195,8 @@ make.getopt.spec <- function() {
 		'precursor-rt-tol', NA_character_,  1,  'numeric',      paste0('Precursor retention time tolerance. Only used when precursor-match is enabled. Default is ', MSDB.DFT[['precursor-rt-tol']], '.'),
 		'pos-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in positive mode. Default is "', MSDB.DFT[['pos-prec']], '".'),
 		'neg-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in negative mode. Default is "', MSDB.DFT[['neg-prec']], '".'),
-		'input-col-names',  NA_character_,  1,  'character',    paste0('Set the input column names. Default is "', concat.kv.list(msdb.get.dft.input.fields()), '".'),
-		'output-col-names', NA_character_,  1,  'character',    paste0('Set the output column names. Default is "', concat.kv.list(msdb.get.dft.output.fields()), '".'),
+		'input-col-names',  NA_character_,  1,  'character',    paste0('Set the input column names. Default is "', DEFAULT.ARG.VALUES[['input-col-names']], '".'),
+		'output-col-names', NA_character_,  1,  'character',    paste0('Set the output column names. Default is "', DEFAULT.ARG.VALUES[['output-col-names']], '".'),
 		'molids-sep',       NA_character_,  1,  'character',    paste0('Set character separator used to when concatenating molecule IDs in output. Default is "', MSDB.DFT[['molids-sep']] , '".'),
 		'first-val',        NA_character_,  0,  'logical',      'Keep only the first value in multi-value fields. Unset by default.',
 		'excel2011comp',            NA_character_,  0,  'logical',      'Excel 2011 compatiblity mode. Output ASCII text files instead of UTF-8 files, where greek letters are replaced with their latin names, plusminus sign is replaced with +- and apostrophe is replaced with \"prime\". All other non-ASCII characters are repladed with underscore.',
