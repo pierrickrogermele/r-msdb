@@ -262,12 +262,16 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		results <- data.frame(MSDB.TAG.MOLID = character(), MSDB.TAG.MOLNAMES = character(), MSDB.TAG.MZTHEO = numeric(), MSDB.TAG.COMP = character(), MSDB.TAG.ATTR = character())
 		for (x in spectra) {
 			if ('source' %in% names(x) && is.list(x$source))
-				results <- rbind(results, data.frame(MSDB.TAG.MOLID = vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = ''),
-				                                     MSDB.TAG.MOLNAMES = vapply(x$source$listOfCompounds, function(c) paste(c$names, collapse = MSDB.MULTIVAL.FIELD.SEP), FUN.VALUE = ''),
-													 MSDB.TAG.MZTHEO = as.numeric(x$theoricalMass),
-													 MSDB.TAG.COMP = as.character(x$composition),
-													 MSDB.TAG.ATTR = as.character(x$attribution),
-													 stringsAsFactors = FALSE))
+				if ('listOfCompounds' %in% names(x$source)) {
+					molids <- vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = '')
+					molnames <- vapply(x$source$listOfCompounds, function(c) paste(c$names, collapse = MSDB.MULTIVAL.FIELD.SEP), FUN.VALUE = '')
+					if (length(molids) > 0 && length(molids) == length(molnames)) {
+						mztheo <- if ('theoricalMass' %in% names(x)) as.numeric(x$theoricalMass) else NA_real_
+						comp <- if ('composition' %in% names(x)) x$composition else NA_character_
+						attr <- if ('attribution' %in% names(x)) x$attribution else NA_character_
+						results <- rbind(results, data.frame(MSDB.TAG.MOLID = molids, MSDB.TAG.MOLNAMES = molnames, MSDB.TAG.MZTHEO = mztheo, MSDB.TAG.COMP = comp, MSDB.TAG.ATTR = attr, stringsAsFactors = FALSE))
+					}
+				}
 		}
 
 		# RT search
