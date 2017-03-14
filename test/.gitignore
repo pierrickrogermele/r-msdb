@@ -10,3 +10,4 @@ filedb-*.tsv
 mz-input*.tsv
 mzrt-input-*.tsv
 !res/*
+res/.*.swp

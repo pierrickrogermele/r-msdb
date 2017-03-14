@@ -138,8 +138,10 @@ call.search.mz <- function(opt, silent = FALSE, use.global.conn.flags = TRUE) {
 	# Adjust path arguments
 	for (path.arg in c('--url', '-i', '-o', '--html-output-file', '--peak-output-file')) {
 		path.arg.index = which(opt %in% path.arg)
-		if (length(path.arg.index == 1))
-			opt[[path.arg.index + 1]] <- get.res.path(opt[[path.arg.index + 1]])
+		if (length(path.arg.index == 1)) {
+			if (substr(opt[[path.arg.index + 1]], 1, 4) != 'http' && substr(opt[[path.arg.index + 1]], 1, 1) != '/')
+				opt[[path.arg.index + 1]] <- get.res.path(opt[[path.arg.index + 1]])
+		}
 	}
 
 	# Set arguments
@@ -152,6 +154,7 @@ call.search.mz <- function(opt, silent = FALSE, use.global.conn.flags = TRUE) {
 	if (silent)
 		call <- paste(call, ">/dev/null", "2>/dev/null")
 
+	print(call)
 	retcode <- system(call)
 
 	if (retcode != 0)
