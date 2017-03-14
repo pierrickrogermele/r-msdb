@@ -272,7 +272,9 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 					inchi <- vapply(x$source$listOfCompounds, function(c) as.character(c$inChI), FUN.VALUE = '')
 					inchikey <- vapply(x$source$listOfCompounds, function(c) as.character(c$inChIKey), FUN.VALUE = '')
 					chebi <- vapply(x$source$listOfCompounds, function(c) as.character(c$ChEBI), FUN.VALUE = '')
+					chebi[chebi == 'CHEBI:null'] <- NA_character_
 					hmdb <- vapply(x$source$listOfCompounds, function(c) as.character(c$HMDB), FUN.VALUE = '')
+					hmdb[hmdb == 'HMDBnull'] <- NA_character_
 					kegg <- vapply(x$source$listOfCompounds, function(c) as.character(c$KEGG), FUN.VALUE = '')
 					pubchem <- vapply(x$source$listOfCompounds, function(c) as.character(c$PubChemCID), FUN.VALUE = '')
 					if (length(molids) > 0 && length(molids) == length(molnames))
