@@ -244,7 +244,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# rt.tol.x          Tolerance parameter for the equations : rtinf = rt - rt.tol.x - rt ^ rt.tol.y and rtsup = rt + rt.tol.x + rt ^ rt.tol.y
 	# rt.tol.y          Tolerance parameter. See rt.tol.x parameter.
 	# attribs           Only search for peaks whose attribution is among this set of attributions.
-	# molids            Only search for peaks whose molecule ID is among this vector of integer molecule IDs. Can also be a data frame with a retention time column x.colnames$rt and a molecule ID column MSDB.TAG.molid.
+	# molids            Only search for peaks whose molecule ID is among this vector of integer molecule IDs. Can also be a data frame with a retention time column x.colnames$rt and a molecule ID column MSDB.TAG.MOLID.
 	# molids.rt.tol     Retention time tolerance used when molids parameter is a data frame (rt, id)
 	# precursor.match   Remove peaks whose molecule precursor peak has not also been matched.
 	# precursor.rt.tol
@@ -270,7 +270,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 			precursors.ids <- precursors.ids[ ! duplicated(precursors.ids), ]
 
 			# Get all matching peaks whose molecule is inside the previously obtained list of molecules
-			.self$.doSearchForMzRtList(mode = mode, shift = shift, prec = prec, col = col, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, molids = precursors.ids, molids.rt.tol = precursor.rt.tol, same.cols = same.cols, same.rows = same.rows, peak.table = peak.table)
+			df <- .self$.doSearchForMzRtList(mode = mode, shift = shift, prec = prec, col = col, rt.tol = NULL, rt.tol.x = NULL, rt.tol.y = NULL, molids = precursors.ids, molids.rt.tol = precursor.rt.tol, same.cols = same.cols, same.rows = same.rows, peak.table = peak.table)
 # TODO 
 #
 #			peaks <- if (peak.table) results[['peaks']] else results
@@ -353,6 +353,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 
 		# Loop on all lines of input
 		peaks <- NULL
+		.self$.input.stream$reset()
 		while (.self$.input.stream$hasNextValues()) {
 
 			.self$.input.stream$nextValues()
@@ -378,7 +379,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 #				else {
 #					if (same.rows) {
 #						y[r, colnames(x.lines)] <- x.lines
-#						ids <- results[[MSDB.TAG.molid]]
+#						ids <- results[[MSDB.TAG.MOLID]]
 #						ids <- ids[ ! duplicated(ids)] # Remove duplicated values
 #						y[r, MSDB.TAG.msmatching] <- paste(ids, collapse = .self$.molids.sep)
 #					}
@@ -435,7 +436,7 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 
 		# List molecule IDs
 		if ( ! is.null(molids.rt.tol) && is.data.frame(molids)) {
-			ids <- molids[(rt >= molids[[MSDB.TAG.colrt]] - molids.rt.tol) & (rt <= molids[[MSDB.TAG.colrt]] + molids.rt.tol), MSDB.TAG.molid]
+			ids <- molids[(rt >= molids[[MSDB.TAG.COLRT]] - molids.rt.tol) & (rt <= molids[[MSDB.TAG.COLRT]] + molids.rt.tol), MSDB.TAG.MOLID]
 			if (length(ids) == 0)
 				# No molecule ID match for this retention time
 				return(data.frame()) # return empty result set

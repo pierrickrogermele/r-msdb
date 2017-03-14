@@ -25,7 +25,7 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 	# GET DATA FRAME #
 	##################
 	
-	MsDbOutputDataFrameStream$methods( getDataFrame = function(...) {
+	MsDbOutputDataFrameStream$methods( getDataFrame = function() {
 
 		# Put at least a column name if empty
 		if (nrow(.self$.df) == 0)
@@ -34,6 +34,15 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 		return(.self$.df)
 	})
 	
+	# Move columns to beginning {{{1
+	
+	MsDbOutputDataFrameStream$methods( moveColumnsToBeginning = function(cols) {
+		all.cols <- colnames(.self$.df)
+		other.cols <- all.cols[ ! all.cols %in% cols]
+		cols <- cols[cols %in% all.cols]
+		.df <<- .self$.df[c(cols, other.cols)]
+	})
+
 	#################
 	# MATCHED PEAKS #
 	#################
@@ -44,8 +53,12 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 
 		# Set input values
 		x <- data.frame(mz = mz)
-		if ( ! is.null(rt))
-			x <- cbind(x, data.frame(rt = rt))
+		colnames(x) <- MSDB.TAG.MZ
+		if ( ! is.null(rt)) {
+			x.rt <- data.frame(rt = rt)
+			colnames(x.rt) <- MSDB.TAG.RT
+			x <- cbind(x, x.rt)
+		}
 
 		# Merge input values with matched peaks
 		if ( ! is.null(peaks)) {
@@ -74,8 +87,12 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 				# Concatenate results in one line
 				if (.self$.one.line) {
  					# For each column, concatenate all values in one string.
-					for (c in seq(peaks))
-						peaks[1, c] <- paste0(peaks[[c]], collapse = .self$.match.sep, FUN.VALUE = '')
+					for (c in seq(peaks)) {
+						v <- peaks[[c]]
+						v <- v[ ! is.na(v)] # remove NA values
+						v <- v[ ! duplicated(v)] # remove duplicates
+						peaks[1, c] <- paste0(v, collapse = .self$.match.sep, FUN.VALUE = '')
+					}
 					peaks <- peaks[1, ] # Keep only first line
 				}
 			}

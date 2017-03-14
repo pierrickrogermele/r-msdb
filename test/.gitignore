@@ -11,3 +11,5 @@ mz-input*.tsv
 mzrt-input-*.tsv
 !res/*
 res/.*.swp
+*-main.tsv
+*-peak.tsv

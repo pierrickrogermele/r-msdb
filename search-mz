@@ -14,7 +14,7 @@ source(file.path(dirname(script.path), 'MsDbOutputDataFrameStream.R'), chdir = T
 source(file.path(dirname(script.path), '../r-lib/htmlhlp.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '../r-lib/strhlp.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '../r-lib/fshlp.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-biodb/biodb-common.R'), chdir = TRUE)
+source(file.path(dirname(script.path), '../r-biodb/R/biodb-common.R'), chdir = TRUE)
 source(file.path(dirname(script.path), '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
 
 # Missing paste0() function in R 2.14.1
@@ -49,10 +49,11 @@ MSDB.DFT[['precursor-rt-tol']] <- 5
 MSDB.DFT[['molids-sep']] <- MSDB.DFT.MATCH.SEP
 MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())
 MSDB.DFT[['db-ms-modes']] <- concat.kv.list(MSDB.DFT.MODES)
-MSDB.DFT[['input-col-names']] <- concat.kv.list(msdb.get.dft.input.fields())
-MSDB.DFT[['output-col-names']] <- concat.kv.list(msdb.get.dft.output.fields())
 MSDB.DFT[['pos-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
 MSDB.DFT[['neg-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
+DEFAULT.ARG.VALUES <- MSDB.DFT
+DEFAULT.ARG.VALUES[['input-col-names']] <- concat.kv.list(msdb.get.dft.input.fields())
+DEFAULT.ARG.VALUES[['output-col-names']] <- concat.kv.list(msdb.get.dft.output.fields())
 
 ##############
 # PRINT HELP #
@@ -108,16 +109,26 @@ parse.arg.val <- function(opt) {
 		opt$rtcol <- strsplit(opt$rtcol, ',')[[1]]
 
 	# Parse input column names
-	if ( ! is.null(opt[['input-col-names']])) {
+	if (is.null(opt[['input-col-names']])) {
+		opt[['input-col-names']] <- msdb.get.dft.input.fields()
+	}
+	else {
 		custcols <- split.kv.list(opt[['input-col-names']])
-		dftcols <- split.kv.list(MSDB.DFT[['input-col-names']])
+		dftcols <- msdb.get.dft.input.fields()
 		opt[['input-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
 	}
 
 	# Parse output column names
-	if ( ! is.null(opt[['output-col-names']])) {
+	if (is.null(opt[['output-col-names']])) {
+		# By default keep input col names for output
+		opt[['output-col-names']] <- msdb.get.dft.output.fields()
+		input.cols <- names(opt[['input-col-names']])
+		output.cols <- names(opt[['output-col-names']])
+		opt[['output-col-names']] <- c(opt[['input-col-names']][input.cols %in% output.cols], opt[['output-col-names']][ ! output.cols %in% input.cols])
+	}
+	else {
 		custcols <- split.kv.list(opt[['output-col-names']])
-		dftcols <- split.kv.list(MSDB.DFT[['output-col-names']])
+		dftcols <- msdb.get.dft.output.fields()
 		opt[['output-col-names']] <- c(custcols, dftcols[ ! names(dftcols) %in% names(custcols)]) 
 	}
 
@@ -136,7 +147,7 @@ parse.arg.val <- function(opt) {
 
 print.dft.arg.val <- function(opt) {
 
-	print.flags <- MSDB.DFT
+	print.flags <- DEFAULT.ARG.VALUES
 	names(print.flags) <- vapply(names(print.flags), function(x) paste0('print-', x), FUN.VALUE = '')
 	for (f in names(print.flags))
 		if ( ! is.null(opt[[f]])) {
@@ -149,7 +160,7 @@ make.getopt.spec.print.dft <- function() {
 
 	spec <- character()
 
-	for (f in names(MSDB.DFT))
+	for (f in names(DEFAULT.ARG.VALUES))
 		spec <- c(spec, paste0('print-', f), NA_character_, 0, 'logical', paste0('Print default value of --', f))
 
 	return(spec)
@@ -184,8 +195,8 @@ make.getopt.spec <- function() {
 		'precursor-rt-tol', NA_character_,  1,  'numeric',      paste0('Precursor retention time tolerance. Only used when precursor-match is enabled. Default is ', MSDB.DFT[['precursor-rt-tol']], '.'),
 		'pos-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in positive mode. Default is "', MSDB.DFT[['pos-prec']], '".'),
 		'neg-prec',         NA_character_,  1,  'character',    paste0('Set the list of precursors to use in negative mode. Default is "', MSDB.DFT[['neg-prec']], '".'),
-		'input-col-names',  NA_character_,  1,  'character',    paste0('Set the input column names. Default is "', MSDB.DFT[['input-col-names']], '".'),
-		'output-col-names', NA_character_,  1,  'character',    paste0('Set the output column names. Default is "', MSDB.DFT[['output-col-names']], '".'),
+		'input-col-names',  NA_character_,  1,  'character',    paste0('Set the input column names. Default is "', DEFAULT.ARG.VALUES[['input-col-names']], '".'),
+		'output-col-names', NA_character_,  1,  'character',    paste0('Set the output column names. Default is "', DEFAULT.ARG.VALUES[['output-col-names']], '".'),
 		'molids-sep',       NA_character_,  1,  'character',    paste0('Set character separator used to when concatenating molecule IDs in output. Default is "', MSDB.DFT[['molids-sep']] , '".'),
 		'first-val',        NA_character_,  0,  'logical',      'Keep only the first value in multi-value fields. Unset by default.',
 		'excel2011comp',            NA_character_,  0,  'logical',      'Excel 2011 compatiblity mode. Output ASCII text files instead of UTF-8 files, where greek letters are replaced with their latin names, plusminus sign is replaced with +- and apostrophe is replaced with \"prime\". All other non-ASCII characters are repladed with underscore.',
@@ -386,17 +397,29 @@ read_args <- function() {
 output.html <- function(db, main, peaks, file, opt, output.fields) {
 
 	# Replace public database IDs by URLs
-	if ( ! is.null(peaks))
+	if ( ! is.null(peaks) || ! is.null(main)) {
+		# Conversion from extdb id field to extdb name
+		extdb2classdb = list()
+		extdb2classdb[MSDB.TAG.KEGG] = BIODB.KEGG
+		extdb2classdb[MSDB.TAG.HMDB] = BIODB.HMDB
+		extdb2classdb[MSDB.TAG.CHEBI] = BIODB.CHEBI
+		extdb2classdb[MSDB.TAG.PUBCHEM] = BIODB.PUBCHEMCOMP
+
+		# Loop on all dbs
 		for (extdb in c(MSDB.TAG.KEGG, MSDB.TAG.HMDB, MSDB.TAG.CHEBI, MSDB.TAG.PUBCHEM)) {
 			field <- output.fields[[extdb]]
-			if (field %in% colnames(peaks))
-				peaks[[field]] <- vapply(peaks[[field]], function(id) paste0('<a href="', get.entry.url(class = extdb, accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
+			if ( ! is.null(peaks) && field %in% colnames(peaks))
+				peaks[[field]] <- vapply(peaks[[field]], function(id) if (is.na(id)) '' else paste0('<a href="', get.entry.url(class = extdb2classdb[[extdb]], accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
+			if ( ! is.null(main) && field %in% colnames(main))
+				main[[field]] <- vapply(main[[field]], function(ids) if (is.na(ids) || nchar(ids) == 0) '' else paste(vapply(strsplit(ids, opt[['molids-sep']])[[1]], function(id) paste0('<a href="', get.entry.url(class = extdb2classdb[[extdb]], accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = ''), collapse = opt[['molids-sep']]), FUN.VALUE = '')
 		}
+	}
 
 	# Write HTML
 	html <- HtmlWriter(file = file)
 	html$writeBegTag('html')
 	html$writeBegTag('header')
+	html$writeTag('meta', attr = c(charset = "UTF-8"))
 	html$writeTag('title', text = "LC/MS matching results")
 	html$writeBegTag('style')
 	html$write('table, th, td { border-collapse: collapse; }')
@@ -414,20 +437,20 @@ output.html <- function(db, main, peaks, file, opt, output.fields) {
 	# Write parameters
 	html$writeTag('h2', text = "Parameters")
 	html$writeBegTag('ul')
-	html$writeTag('li', paste0("Mode = ", opt$mode, "."))
-	html$writeTag('li', paste0("M/Z precision = ", opt$mzprec, "."))
-	html$writeTag('li', paste0("M/Z shift = ", opt$mzshift, "."))
-	html$writeTag('li', paste0("Precursor match = ", (if (is.null(opt[['precursor-match']])) "no" else "yes"), "."))
+	html$writeTag('li', text = paste0("Mode = ", opt$mode, "."))
+	html$writeTag('li', text = paste0("M/Z precision = ", opt$mzprec, "."))
+	html$writeTag('li', text = paste0("M/Z shift = ", opt$mzshift, "."))
+	html$writeTag('li', text = paste0("Precursor match = ", (if (is.null(opt[['precursor-match']])) "no" else "yes"), "."))
 	if ( ! is.null(opt[['precursor-match']])) {
-		html$writeTag('li', paste0("Positive precursors = ", paste0(opt[['pos-prec']], collapse = ', '), "."))
-		html$writeTag('li', paste0("Negative precursors = ", paste0(opt[['neg-prec']], collapse = ', '), "."))
+		html$writeTag('li', text = paste0("Positive precursors = ", paste0(opt[['pos-prec']], collapse = ', '), "."))
+		html$writeTag('li', text = paste0("Negative precursors = ", paste0(opt[['neg-prec']], collapse = ', '), "."))
 	}
 	if ( ! is.null(opt$rtcol)) {
-		html$writeTag('li', paste0("Columns = ", paste(opt$rtcol, collapse = ", "), "."))
-		html$writeTag('li', paste0("RTX = ", opt$rttolx, "."))
-		html$writeTag('li', paste0("RTY = ", opt$rttoly, "."))
+		html$writeTag('li', text = paste0("Columns = ", paste(opt$rtcol, collapse = ", "), "."))
+		html$writeTag('li', text = paste0("RTX = ", opt$rttolx, "."))
+		html$writeTag('li', text = paste0("RTY = ", opt$rttoly, "."))
 		if ( ! is.null(opt[['precursor-match']]))
-			html$writeTag('li', paste0("RTZ = ", opt[['precursor-rt-tol']], "."))
+			html$writeTag('li', text = paste0("RTZ = ", opt[['precursor-rt-tol']], "."))
 	}
 	html$writeEndTag('ul')
 
@@ -480,7 +503,7 @@ if ( ! is.null(opt[['input-file']]) && ! file.exists(opt[['input-file']]))
 if (file.info(opt[['input-file']])$size > 0) {
 
 	# Load file into data frame
-	input <- read.table(file = opt[['input-file']], header = TRUE, sep = "\t")
+	input <- read.table(file = opt[['input-file']], header = TRUE, sep = "\t", stringsAsFactor = FALSE)
 
 	# Convert each column that is identified by a number into a name
 	for (field in names(opt[['input-col-names']])) {
@@ -533,6 +556,8 @@ mode <- if (opt$mode == POS_MODE) MSDB.TAG.POS else MSDB.TAG.NEG
 db$searchForMzRtList(mode = mode, shift = opt$mzshift, prec = opt$mzprec, rt.tol = opt$rttol, rt.tol.x = opt$rttolx, rt.tol.y = opt$rttoly, col = opt$rtcol, precursor.match = ! is.null(opt[['precursor-match']]), precursor.rt.tol = opt[['precursor-rt-tol']])
 
 # Write output
+main.output$moveColumnsToBeginning(colnames(input))
+peaks.output$moveColumnsToBeginning(colnames(input))
 # TODO Create a class MsDbOutputCsvFileStream
 df.write.tsv(main.output$getDataFrame(), file = opt[['output-file']], row.names = FALSE)
 if ( ! is.null(opt[['peak-output-file']]))

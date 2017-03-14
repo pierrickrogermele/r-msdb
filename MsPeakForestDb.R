@@ -260,13 +260,15 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		# Build result data frame
 		results <- data.frame(MSDB.TAG.MOLID = character(), MSDB.TAG.MOLNAMES = character(), MSDB.TAG.MZTHEO = numeric(), MSDB.TAG.COMP = character(), MSDB.TAG.ATTR = character())
-		for (x in spectra)
-			results <- rbind(results, data.frame(MSDB.TAG.MOLID = vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = ''),
-			                                     MSDB.TAG.MOLNAMES = vapply(x$source$listOfCompounds, function(c) paste(c$names, collapse = MSDB.MULTIVAL.FIELD.SEP), FUN.VALUE = ''),
-												 MSDB.TAG.MZTHEO = as.numeric(x$theoricalMass),
-												 MSDB.TAG.COMP = as.character(x$composition),
-												 MSDB.TAG.ATTR = as.character(x$attribution),
-												 stringsAsFactors = FALSE))
+		for (x in spectra) {
+			if ('source' %in% names(x) && is.list(x$source))
+				results <- rbind(results, data.frame(MSDB.TAG.MOLID = vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = ''),
+				                                     MSDB.TAG.MOLNAMES = vapply(x$source$listOfCompounds, function(c) paste(c$names, collapse = MSDB.MULTIVAL.FIELD.SEP), FUN.VALUE = ''),
+													 MSDB.TAG.MZTHEO = as.numeric(x$theoricalMass),
+													 MSDB.TAG.COMP = as.character(x$composition),
+													 MSDB.TAG.ATTR = as.character(x$attribution),
+													 stringsAsFactors = FALSE))
+		}
 
 		# RT search
 		if ( ! is.null(rt.low) && ! is.null(rt.high)) {
