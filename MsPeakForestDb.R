@@ -259,18 +259,24 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		spectra <- .self$.get.url(url = url)
 
 		# Build result data frame
-		results <- data.frame(MSDB.TAG.MOLID = character(), MSDB.TAG.MOLNAMES = character(), MSDB.TAG.MZTHEO = numeric(), MSDB.TAG.COMP = character(), MSDB.TAG.ATTR = character())
+		results <- data.frame(MSDB.TAG.MOLID = character(), MSDB.TAG.MOLNAMES = character(), MSDB.TAG.MOLMASS = numeric(), MSDB.TAG.MZTHEO = numeric(), MSDB.TAG.COMP = character(), MSDB.TAG.ATTR = character(), MSDB.TAG.INCHI = character(), MSDB.TAG.INCHIKEY = character(), MSDB.TAG.CHEBI = character(), MSDB.TAG.HMDB = character(), MSDB.TAG.KEGG = character(), MSDB.TAG.PUBCHEM = character())
 		for (x in spectra) {
 			if ('source' %in% names(x) && is.list(x$source))
+				mztheo <- if ('theoricalMass' %in% names(x)) as.numeric(x$theoricalMass) else NA_real_
+				comp <- if ('composition' %in% names(x)) x$composition else NA_character_
+				attr <- if ('attribution' %in% names(x)) x$attribution else NA_character_
 				if ('listOfCompounds' %in% names(x$source)) {
 					molids <- vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = '')
 					molnames <- vapply(x$source$listOfCompounds, function(c) paste(c$names, collapse = MSDB.MULTIVAL.FIELD.SEP), FUN.VALUE = '')
-					if (length(molids) > 0 && length(molids) == length(molnames)) {
-						mztheo <- if ('theoricalMass' %in% names(x)) as.numeric(x$theoricalMass) else NA_real_
-						comp <- if ('composition' %in% names(x)) x$composition else NA_character_
-						attr <- if ('attribution' %in% names(x)) x$attribution else NA_character_
-						results <- rbind(results, data.frame(MSDB.TAG.MOLID = molids, MSDB.TAG.MOLNAMES = molnames, MSDB.TAG.MZTHEO = mztheo, MSDB.TAG.COMP = comp, MSDB.TAG.ATTR = attr, stringsAsFactors = FALSE))
-					}
+					mass <- vapply(x$source$listOfCompounds, function(c) as.character(c$averageMass), FUN.VALUE = '')
+					inchi <- vapply(x$source$listOfCompounds, function(c) as.character(c$inChI), FUN.VALUE = '')
+					inchikey <- vapply(x$source$listOfCompounds, function(c) as.character(c$inChIKey), FUN.VALUE = '')
+					chebi <- vapply(x$source$listOfCompounds, function(c) as.character(c$ChEBI), FUN.VALUE = '')
+					hmdb <- vapply(x$source$listOfCompounds, function(c) as.character(c$HMDB), FUN.VALUE = '')
+					kegg <- vapply(x$source$listOfCompounds, function(c) as.character(c$KEGG), FUN.VALUE = '')
+					pubchem <- vapply(x$source$listOfCompounds, function(c) as.character(c$PubChemCID), FUN.VALUE = '')
+					if (length(molids) > 0 && length(molids) == length(molnames))
+						results <- rbind(results, data.frame(MSDB.TAG.MOLID = molids, MSDB.TAG.MOLNAMES = molnames, MSDB.TAG.MOLMASS = mass, MSDB.TAG.MZTHEO = mztheo, MSDB.TAG.COMP = comp, MSDB.TAG.ATTR = attr, MSDB.TAG.INCHI = inchi, MSDB.TAG.INCHIKEY = inchikey, MSDB.TAG.CHEBI = chebi, MSDB.TAG.HMDB = hmdb, MSDB.TAG.KEGG = kegg, MSDB.TAG.PUBCHEM = pubchem, stringsAsFactors = FALSE))
 				}
 		}
 
