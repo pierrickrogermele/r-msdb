@@ -51,6 +51,8 @@ MSDB.DFT[['db-fields']] <- concat.kv.list(msdb.get.dft.db.fields())
 MSDB.DFT[['db-ms-modes']] <- concat.kv.list(MSDB.DFT.MODES)
 MSDB.DFT[['pos-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.POS]], collapse = ',')
 MSDB.DFT[['neg-prec']] <- paste(MSDB.DFT.PREC[[MSDB.TAG.NEG]], collapse = ',')
+MSDB.DFT[['db-rt-unit']] <- MSDB.RTUNIT.SEC
+MSDB.DFT[['rtunit']] <- MSDB.RTUNIT.SEC
 DEFAULT.ARG.VALUES <- MSDB.DFT
 DEFAULT.ARG.VALUES[['input-col-names']] <- concat.kv.list(msdb.get.dft.input.fields())
 DEFAULT.ARG.VALUES[['output-col-names']] <- concat.kv.list(msdb.get.dft.output.fields())
@@ -181,6 +183,7 @@ make.getopt.spec <- function() {
 		'rttolx',           'x',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rttoly',           'y',            1,  'numeric',      paste0('Tolerance on retention times. Unset by default.'),
 		'rtcol',            'c',            1,  'character',    paste0('Chromatographic column to use. Unset by default. If set, use the corresponding column to filter on retention times, if retention times are provided.'),
+		'rtunit',           NA_character_,  1,  'character',    paste0('Retention time unit for the input file. Default is ', MSDB.DFT$rtunit, '. Allowed values are:', paste(MSDB.RTUNIT.VALS, collapse = ", "), '.'),
 		'all-cols',         NA_character_,  0,  'logical',      'Use all available chromatographic columns to match retention times.',
 		'check-cols',       NA_character_,  0,  'logical',      'Check that the chromatographic column names specified with option -c really exist.',
 		'list-cols',        NA_character_,  0,  'logical',      'List all chromatographic columns present in the database. Write list inside the file specified by -o option.',
@@ -206,8 +209,9 @@ make.getopt.spec <- function() {
 		'db-name',          NA_character_,  1,  'character',    'Name of the database. Used by the "4tabsql" database.',
 		'db-user',          NA_character_,  1,  'character',    'User of the database. Used by the "4tabsql" database.',
 		'db-password',      NA_character_,  1,  'character',    'Password of the database user. Used by the "4tabsql" database.',
-		'db-fields',        NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the field names to be used in the single file database (option --db-file). Default is "', MSDB.DFT[['db-fields']], '".'),
-		'db-ms-modes',      NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the MS modes to be used in the single file database (option --db-file). Default is "', MSDB.DFT[['db-ms-modes']], '".'),
+		'db-fields',        NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the field names to be used in the single file database. Default is "', MSDB.DFT[['db-fields']], '".'),
+		'db-ms-modes',      NA_character_,  1,  'character',    paste0('Comma separated key/value list giving the MS modes to be used in the single file database. Default is "', MSDB.DFT[['db-ms-modes']], '".'),
+		'db-rt-unit',       NA_character_,  1,  'character',    paste0('Retention time unit for the database, used in the single file database. Default is "', MSDB.DFT[['db-rt-unit']], '". Allowed values are:', paste(MSDB.RTUNIT.VALS, collapse = ", "), '.'),
 		'db-token',         NA_character_,  1,  'character',    'Database token. Used by Peakforest database.',
 		'debug',            NA_character_,  0,  'logical',      'Set debug mode.'
 		)
@@ -542,14 +546,16 @@ if ( ! is.null(opt$rtcol) && ! opt[['input-col-names']][['rt']] %in% colnames(in
 	stop(paste0("You are running an MZ/RT match run on your input data, but no retention time column named '", opt[['input-col-names']][['rt']],"' can be found inside your input file."))
 
 # Set streams
-input.stream <- MsDbInputDataFrameStream$new(df = input, input.fields = opt[['input-col-names']])
+input.stream <- MsDbInputDataFrameStream$new(df = input, input.fields = opt[['input-col-names']], rtunit = opt[['rtunit']])
 main.output <- MsDbOutputDataFrameStream$new(keep.unused = ! is.null(opt[['same-cols']]), output.fields = opt[['output-col-names']], one.line = ! is.null(opt[['same-rows']]), match.sep = opt[['molids-sep']], first.val = ! is.null(opt[['first-val']]), ascii = ! is.null(opt[['excel2011comp']]), nogreek = ! is.null(opt[['excel2011comp']]), noapostrophe = ! is.null(opt[['excel2011comp']]), noplusminus = ! is.null(opt[['excel2011comp']]))
 peaks.output <- MsDbOutputDataFrameStream$new(keep.unused = ! is.null(opt[['same-cols']]), output.fields = opt[['output-col-names']], first.val = ! is.null(opt[['first-val']]), ascii = ! is.null(opt[['excel2011comp']]), nogreek = ! is.null(opt[['excel2011comp']]), noapostrophe = ! is.null(opt[['excel2011comp']]), noplusminus = ! is.null(opt[['excel2011comp']]))
 invisible(db$setInputStream(input.stream))
 db$addOutputStreams(c(main.output, peaks.output))
 
-# Set M/Z tolerance unit
+# Set database units
 db$setMzTolUnit(opt$mztolunit)
+if ( ! is.null(opt[['db-rt-unit']]) && opt$database == 'file')
+	db$setRtUnit(opt[['db-rt-unit']])
 
 # Search database
 mode <- if (opt$mode == POS_MODE) MSDB.TAG.POS else MSDB.TAG.NEG

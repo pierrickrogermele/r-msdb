@@ -16,6 +16,8 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 	
 	MsPeakForestDb$methods( initialize = function(url = NA_character_, useragent = NA_character_, token = NA_character_, ...) {
 
+		callSuper(...)
+
 		# Check URL
 		if (is.null(url) || is.na(url))
 		    stop("No URL defined for new MsPeakForestDb instance.")
@@ -26,8 +28,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		.url.scheduler <<- UrlRequestScheduler$new(n = 3, useragent = useragent)
 		.self$.url.scheduler$setVerbose(1L)
 		.token <<- token
-
-		callSuper(...)
+		.rt.unit <<- MSDB.RTUNIT.MIN
 	})
 
 	###########
@@ -53,11 +54,9 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 
 		if (ret.type == 'json') {
 
-			library(RJSONIO)
+			res <- jsonlite::fromJSON(content, simplifyDataFrame = FALSE)
 
-			res <- fromJSON(content, nullValue = NA)
-
-			if (class(res) == 'list' && 'success' %in% names(res) && res$success == FALSE) {
+			if (is.null(res)) {
 				param.str <- if (is.null(params)) '' else paste('?', vapply(names(params), function(p) paste(p, params[[p]], sep = '='), FUN.VALUE = ''), collapse = '&', sep = '')
 				stop(paste0("Failed to run web service. URL was \"", url, param.str, "\"."))
 			}
@@ -66,8 +65,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 				if (grepl('^[0-9]+$', content, perl = TRUE))
 					res <- as.integer(content)
 				else {
-					library(RJSONIO)
-					res <- fromJSON(content, nullValue = NA)
+					res <- jsonlite::fromJSON(content, simplifyDataFrame = FALSE)
 				}
 			}
 		}
@@ -141,6 +139,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 			for (s in spectra)
 				if (is.na(col) || s$liquidChromatography$columnCode %in% col) {
 					ret.time <- (s$RTmin + s$RTmax) / 2
+					ret.time <- ret.time * 60 # Retention time are in minutes in Peakforest, but we want them in seconds
 					c <- s$liquidChromatography$columnCode
 					if (c %in% names(rt)) {
 						if ( ! ret.time %in% rt[[c]])
@@ -262,21 +261,21 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 		results <- data.frame(MSDB.TAG.MOLID = character(), MSDB.TAG.MOLNAMES = character(), MSDB.TAG.MOLMASS = numeric(), MSDB.TAG.MZTHEO = numeric(), MSDB.TAG.COMP = character(), MSDB.TAG.ATTR = character(), MSDB.TAG.INCHI = character(), MSDB.TAG.INCHIKEY = character(), MSDB.TAG.CHEBI = character(), MSDB.TAG.HMDB = character(), MSDB.TAG.KEGG = character(), MSDB.TAG.PUBCHEM = character())
 		for (x in spectra) {
 			if ('source' %in% names(x) && is.list(x$source))
-				mztheo <- if ('theoricalMass' %in% names(x)) as.numeric(x$theoricalMass) else NA_real_
-				comp <- if ('composition' %in% names(x)) x$composition else NA_character_
-				attr <- if ('attribution' %in% names(x)) x$attribution else NA_character_
+				mztheo <- if ('mz' %in% names(x) && ! is.null(x$mz)) as.numeric(x$mz) else NA_real_
+				comp <- if ('composition' %in% names(x) && ! is.null(x$composition)) x$composition else NA_character_
+				attr <- if ('attribution' %in% names(x) && ! is.null(x$attribution)) x$attribution else NA_character_
 				if ('listOfCompounds' %in% names(x$source)) {
-					molids <- vapply(x$source$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = '')
-					molnames <- vapply(x$source$listOfCompounds, function(c) paste(c$names, collapse = MSDB.MULTIVAL.FIELD.SEP), FUN.VALUE = '')
-					mass <- vapply(x$source$listOfCompounds, function(c) as.character(c$averageMass), FUN.VALUE = '')
-					inchi <- vapply(x$source$listOfCompounds, function(c) as.character(c$inChI), FUN.VALUE = '')
-					inchikey <- vapply(x$source$listOfCompounds, function(c) as.character(c$inChIKey), FUN.VALUE = '')
-					chebi <- vapply(x$source$listOfCompounds, function(c) as.character(c$ChEBI), FUN.VALUE = '')
+					molids <- vapply(x$source$listOfCompounds, function(c) if ('id' %in% names(c) && ! is.null(c$id)) as.character(c$id) else NA_character_, FUN.VALUE = '')
+					molnames <- vapply(x$source$listOfCompounds, function(c) if ('names' %in% names(c) && ! is.null(c$names)) paste(c$names, collapse = MSDB.MULTIVAL.FIELD.SEP) else NA_character_, FUN.VALUE = '')
+					mass <- vapply(x$source$listOfCompounds, function(c) if ( ! 'averageMass' %in% names(c) || is.null(c$averageMass)) NA_real_ else as.double(c$averageMass), FUN.VALUE = 0.0)
+					inchi <- vapply(x$source$listOfCompounds, function(c) if ( ! 'inChI' %in% names(c) || is.null(c$inChI)) NA_character_ else as.character(c$inChI), FUN.VALUE = '')
+					inchikey <- vapply(x$source$listOfCompounds, function(c) if ( ! 'inChIKey' %in% names(c) || is.null(c$inChIKey)) NA_character_ else as.character(c$inChIKey), FUN.VALUE = '')
+					chebi <- vapply(x$source$listOfCompounds, function(c) if ('ChEBI'  %in% names(c) && ! is.null(c$ChEBI)) as.character(c$ChEBI) else NA_character_, FUN.VALUE = '')
 					chebi[chebi == 'CHEBI:null'] <- NA_character_
-					hmdb <- vapply(x$source$listOfCompounds, function(c) as.character(c$HMDB), FUN.VALUE = '')
+					hmdb <- vapply(x$source$listOfCompounds, function(c) if ('HMDB' %in% names(c) && ! is.null(c$HMDB)) as.character(c$HMDB) else NA_character_, FUN.VALUE = '')
 					hmdb[hmdb == 'HMDBnull'] <- NA_character_
-					kegg <- vapply(x$source$listOfCompounds, function(c) as.character(c$KEGG), FUN.VALUE = '')
-					pubchem <- vapply(x$source$listOfCompounds, function(c) as.character(c$PubChemCID), FUN.VALUE = '')
+					kegg <- vapply(x$source$listOfCompounds, function(c) if ( ! 'KEGG' %in% names(c) || is.null(c$KEGG)) NA_character_ else as.character(c$KEGG), FUN.VALUE = '')
+					pubchem <- vapply(x$source$listOfCompounds, function(c) if ( ! 'PubChemCID' %in% names(c) || is.null(c$PubChemCID)) NA_character_ else as.character(c$PubChemCID), FUN.VALUE = '')
 					if (length(molids) > 0 && length(molids) == length(molnames))
 						results <- rbind(results, data.frame(MSDB.TAG.MOLID = molids, MSDB.TAG.MOLNAMES = molnames, MSDB.TAG.MOLMASS = mass, MSDB.TAG.MZTHEO = mztheo, MSDB.TAG.COMP = comp, MSDB.TAG.ATTR = attr, MSDB.TAG.INCHI = inchi, MSDB.TAG.INCHIKEY = inchikey, MSDB.TAG.CHEBI = chebi, MSDB.TAG.HMDB = hmdb, MSDB.TAG.KEGG = kegg, MSDB.TAG.PUBCHEM = pubchem, stringsAsFactors = FALSE))
 				}
@@ -292,17 +291,27 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 				url <- paste0('spectra/lcms/range-rt-min/', rt.low, '/', rt.high)
 				params <- NULL
 				if ( ! is.null(col))
-					params <- c(columns = paste(col, collapse = ','))
+					params <- c(columns = paste(col[['id']], collapse = ','))
 
 				# Run query
 				rtspectra <- .self$.get.url(url = url, params = params)
 
+
 				# Get compound/molecule IDs
-				for (x in spectra)
-					rt.res <- rbind(rt.res, data.frame(MSDB.TAG.MOLID = vapply(x$listOfCompounds, function(c) as.character(c$id), FUN.VALUE = ''),
-				                                   	   MSDB.TAG.COL = as.character(x$liquidChromatography$columnCode),
-				                                   	   MSDB.TAG.COLRT = (as.numeric(x$RTmin) + as.numeric(x$RTmax)) / 2,
-					                                   	   stringsAsFactors = FALSE))
+				for (x in rtspectra)
+					if (all(c('listOfCompounds', 'liquidChromatography') %in% names(x))) {
+						molids <- vapply(x$listOfCompounds, function(c) if ('id' %in% names(c) && ! is.null(c$id)) as.character(c$id) else NA_character_, FUN.VALUE = '')
+						if (length(molids) > 0) {
+							col <- if ('columnCode' %in% names(x$liquidChromatography) && ! is.null(x$liquidChromatography$columnCode)) as.character(x$liquidChromatography$columnCode) else NA_character_
+							rtmin <- if ('RTmin' %in% names(x) && ! is.null(x$RTmin)) as.double(x$RTmin) else NA_real_
+							rtmax <- if ('RTmax' %in% names(x) && ! is.null(x$RTmax)) as.double(x$RTmax) else NA_real_
+							colrt <- (rtmin + rtmax) / 2
+							rt.res <- rbind(rt.res, data.frame(MSDB.TAG.MOLID = molids,
+				                                   	   	   	   MSDB.TAG.COL = col,
+				                                   	   	   	   MSDB.TAG.COLRT = colrt,
+					                                   	   	   stringsAsFactors = FALSE))
+						}
+					}
 			}	
 
 			# Add retention times and column info

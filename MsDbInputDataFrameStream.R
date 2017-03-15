@@ -7,18 +7,19 @@ if ( ! exists('MsDbInputDataFrameStream')) { # Do not load again if already load
 	# CLASS DECLARATION #
 	#####################
 	
-	MsDbInputDataFrameStream <- setRefClass("MsDbInputDataFrameStream", contains = 'MsDbInputStream', fields = list( .df = "ANY", .i = "integer"))
+	MsDbInputDataFrameStream <- setRefClass("MsDbInputDataFrameStream", contains = 'MsDbInputStream', fields = list( .df = "ANY", .i = "integer", .rtunit = 'character'))
 	
 	###############
 	# CONSTRUCTOR #
 	###############
 	
-	MsDbInputDataFrameStream$methods( initialize = function(df = data.frame(), input.fields = msdb.get.dft.input.fields(), ...) {
+	MsDbInputDataFrameStream$methods( initialize = function(df = data.frame(), input.fields = msdb.get.dft.input.fields(), rtunit = MSDB.RTUNIT.SEC, ...) {
+		
+		callSuper(input.fields = input.fields, ...)
 
 		.df <<- df
 		.i <<- 0L
-		
-		callSuper(input.fields = input.fields, ...)
+		.rtunit <<- rtunit
 	})
 
 	##########
@@ -39,10 +40,15 @@ if ( ! exists('MsDbInputDataFrameStream')) { # Do not load again if already load
 
 	MsDbInputDataFrameStream$methods( getRt = function() {
 
-		if (.self$.i > 0 && .self$.i <= nrow(.self$.df) && ! is.null(.self$.input.fields[[MSDB.TAG.RT]]))
-			return(.self$.df[.self$.i, .self$.input.fields[[MSDB.TAG.RT]]])
+		rt <- NULL
 
-		return(NULL)
+		if (.self$.i > 0 && .self$.i <= nrow(.self$.df) && ! is.null(.self$.input.fields[[MSDB.TAG.RT]])) {
+			rt <- .self$.df[.self$.i, .self$.input.fields[[MSDB.TAG.RT]]]
+			if (.self$.rtunit == MSDB.RTUNIT.MIN)
+				rt <- rt * 60
+		}
+
+		return(rt)
 	})
 
 	###########

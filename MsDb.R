@@ -9,21 +9,22 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# CLASS DECLARATION #
 	#####################
 	
-	MsDb <- setRefClass("MsDb", fields = list(.observers = "ANY", .prec = "list", .output.streams = "ANY", .input.stream = "ANY", .mz.tol.unit = "character"))
+	MsDb <- setRefClass("MsDb", fields = list(.observers = "ANY", .prec = "list", .output.streams = "ANY", .input.stream = "ANY", .mz.tol.unit = "character", .rt.unit = "character"))
 	
 	###############
 	# CONSTRUCTOR #
 	###############
 	
 	MsDb$methods( initialize = function(...) {
+		
+		callSuper(...)
 
 		.observers <<- NULL
 		.output.streams <<- NULL
 		.input.stream <<- NULL
 		.prec <<- MSDB.DFT.PREC
 		.mz.tol.unit <<- MSDB.DFT.MZTOLUNIT
-		
-		callSuper(...)
+		.rt.unit <<- MSDB.RTUNIT.SEC
 	})
 
 	####################
@@ -126,12 +127,28 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		stop("Method setDbMsModes() not implemented in concrete class.")
 	})
 	
+	###################
+	# SET MZ TOL UNIT #
+	###################
+
 	MsDb$methods( setMzTolUnit = function(mztolunit) {
 
 		if ( ! mztolunit %in% MSDB.MZTOLUNIT.VALS)
 			stop(paste0("M/Z tolerance unit must be one of: ", paste(MSDB.MZTOLUNIT.VALS, collapse = ', '), "."))
 
 		.mz.tol.unit <<- mztolunit
+	})
+
+	###############
+	# SET RT UNIT #
+	###############
+
+	MsDb$methods( setRtlUnit = function(unit) {
+
+		if ( ! unit %in% MSDB.RTUNIT.VALS)
+			stop(paste0("RT unit must be one of: ", paste(MSDB.RTUNIT.VALS, collapse = ', '), "."))
+
+		.rt.unit <<- rtunit
 	})
 
 	####################

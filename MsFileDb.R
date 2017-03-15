@@ -395,8 +395,10 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 			db <- db[db[[MSDB.TAG.COL]] %in% col,]
 
 		# Filter on retention time
-		if ( ! is.null(rt.low) && ! is.na(rt.low) && ! is.null(rt.high) && ! is.na(rt.high))
-			db <- db[db[[MSDB.TAG.COLRT]] >= rt.low & db[[MSDB.TAG.COLRT]] <= rt.high, ]
+		if ( ! is.null(rt.low) && ! is.na(rt.low) && ! is.null(rt.high) && ! is.na(rt.high)) {
+			scale <- if (.self$.rt.unit == MSDB.RTUNIT.MIN) 60 else 1
+			db <- db[db[[MSDB.TAG.COLRT]] * scale >= rt.low & db[[MSDB.TAG.COLRT]] <= rt.high, ]
+		}
 
 		# Remove retention times and column information
 		if (is.null(col) || is.na(col) || is.null(rt.low) || is.na(rt.low) || is.null(rt.high) || is.na(rt.high)) {
@@ -486,6 +488,9 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 			colrts <- db[db[[MSDB.TAG.COL]] %in% col, MSDB.TAG.COLRT]
 			rt[col] <- list(colrts)
 		}
+
+		if (.self$.rt.unit == MSDB.RTUNIT.MIN)
+			rt <- 60 * rt
 
 		return(rt)
 	})
