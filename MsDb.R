@@ -143,12 +143,12 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 	# SET RT UNIT #
 	###############
 
-	MsDb$methods( setRtlUnit = function(unit) {
+	MsDb$methods( setRtUnit = function(unit) {
 
 		if ( ! unit %in% MSDB.RTUNIT.VALS)
 			stop(paste0("RT unit must be one of: ", paste(MSDB.RTUNIT.VALS, collapse = ', '), "."))
 
-		.rt.unit <<- rtunit
+		.rt.unit <<- unit
 	})
 
 	####################
