@@ -308,7 +308,7 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 							colrt <- (rtmin + rtmax) / 2
 							rt.res <- rbind(rt.res, data.frame(MSDB.TAG.MOLID = molids,
 				                                   	   	   	   MSDB.TAG.COL = col,
-				                                   	   	   	   MSDB.TAG.COLRT = colrt,
+				                                   	   	   	   MSDB.TAG.COLRT = colrt * 60,
 					                                   	   	   stringsAsFactors = FALSE))
 						}
 					}

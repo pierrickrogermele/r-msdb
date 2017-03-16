@@ -7,7 +7,7 @@ if ( ! exists('MsDbOutputStream')) { # Do not load again if already loaded
 	# CLASS DECLARATION #
 	#####################
 	
-	MsDbOutputStream <- setRefClass("MsDbOutputStream", fields = list(.keep.unused = "logical", .one.line = "logical", .match.sep = "character", .output.fields = "ANY", .multval.field.sep = "character", .first.val = "logical", .ascii = "logical", .noapostrophe = "logical", .noplusminus = "logical", .nogreek = "logical"))
+	MsDbOutputStream <- setRefClass("MsDbOutputStream", fields = list(.keep.unused = "logical", .one.line = "logical", .match.sep = "character", .output.fields = "ANY", .multval.field.sep = "character", .first.val = "logical", .ascii = "logical", .noapostrophe = "logical", .noplusminus = "logical", .nogreek = "logical", .rtunit = 'character'))
 	
 	###############
 	# CONSTRUCTOR #
@@ -20,7 +20,9 @@ if ( ! exists('MsDbOutputStream')) { # Do not load again if already loaded
 	#' @return
 	#' @examples
 	#' stream <- MsDbOutputDataFrameStream$new(one.line = TRUE)
-	MsDbOutputStream$methods( initialize = function(keep.unused = FALSE, one.line = FALSE, match.sep = MSDB.DFT.MATCH.SEP, output.fields = msdb.get.dft.output.fields(), multval.field.sep = MSDB.DFT.OUTPUT.MULTIVAL.FIELD.SEP, first.val = FALSE, ascii = FALSE, noapostrophe = FALSE, noplusminus = FALSE, nogreek = FALSE, ...) {
+	MsDbOutputStream$methods( initialize = function(keep.unused = FALSE, one.line = FALSE, match.sep = MSDB.DFT.MATCH.SEP, output.fields = msdb.get.dft.output.fields(), multval.field.sep = MSDB.DFT.OUTPUT.MULTIVAL.FIELD.SEP, first.val = FALSE, ascii = FALSE, noapostrophe = FALSE, noplusminus = FALSE, nogreek = FALSE, rtunit = MSDB.RTUNIT.SEC, ...) {
+
+		callSuper(...)
 		
 		.keep.unused <<- keep.unused
 		.one.line <<- one.line
@@ -32,8 +34,7 @@ if ( ! exists('MsDbOutputStream')) { # Do not load again if already loaded
 		.noapostrophe <<- noapostrophe
 		.noplusminus <<- noplusminus
 		.nogreek <<- nogreek
-
-		callSuper(...)
+		.rtunit <<- rtunit
 	})
 	
 	#################

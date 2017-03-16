@@ -15,10 +15,10 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 	###############
 	
 	MsDbOutputDataFrameStream$methods( initialize = function(keep.unused = FALSE, one.line = FALSE, match.sep = MSDB.DFT.MATCH.SEP, output.fields = msdb.get.dft.output.fields(), multval.field.sep = MSDB.DFT.OUTPUT.MULTIVAL.FIELD.SEP, first.val = FALSE, ascii = FALSE, noapostrophe = FALSE, noplusminus = FALSE, nogreek = FALSE, ...) {
-
-		.df <<- data.frame()
 		
 		callSuper(keep.unused = keep.unused, one.line = one.line, match.sep = match.sep, output.fields = output.fields, multval.field.sep = multval.field.sep, first.val = first.val, ascii = ascii, noapostrophe = noapostrophe, noplusminus = noplusminus, nogreek = nogreek, ...)
+
+		.df <<- data.frame()
 	})
 
 	##################
@@ -57,8 +57,11 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 		if ( ! is.null(rt)) {
 			x.rt <- data.frame(rt = rt)
 			colnames(x.rt) <- MSDB.TAG.RT
+			if (.self$.rtunit == MSDB.RTUNIT.MIN)
+				x.rt[[MSDB.TAG.RT]] <- x.rt[[MSDB.TAG.RT]] / 60
 			x <- cbind(x, x.rt)
 		}
+
 
 		# Merge input values with matched peaks
 		if ( ! is.null(peaks)) {
@@ -67,6 +70,11 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 			if (nrow(peaks) == 0)
 				# Add NA values
 				peaks[1, ] <- NA
+
+			# Convert RT
+			if (.self$.rtunit == MSDB.RTUNIT.MIN)
+				if (MSDB.TAG.COLRT %in% colnames(peaks))
+					peaks[[MSDB.TAG.COLRT]] <- peaks[[MSDB.TAG.COLRT]] / 60
 
 			# Process existing rows
 			else {

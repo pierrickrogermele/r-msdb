@@ -547,8 +547,8 @@ if ( ! is.null(opt$rtcol) && ! opt[['input-col-names']][['rt']] %in% colnames(in
 
 # Set streams
 input.stream <- MsDbInputDataFrameStream$new(df = input, input.fields = opt[['input-col-names']], rtunit = opt[['rtunit']])
-main.output <- MsDbOutputDataFrameStream$new(keep.unused = ! is.null(opt[['same-cols']]), output.fields = opt[['output-col-names']], one.line = ! is.null(opt[['same-rows']]), match.sep = opt[['molids-sep']], first.val = ! is.null(opt[['first-val']]), ascii = ! is.null(opt[['excel2011comp']]), nogreek = ! is.null(opt[['excel2011comp']]), noapostrophe = ! is.null(opt[['excel2011comp']]), noplusminus = ! is.null(opt[['excel2011comp']]))
-peaks.output <- MsDbOutputDataFrameStream$new(keep.unused = ! is.null(opt[['same-cols']]), output.fields = opt[['output-col-names']], first.val = ! is.null(opt[['first-val']]), ascii = ! is.null(opt[['excel2011comp']]), nogreek = ! is.null(opt[['excel2011comp']]), noapostrophe = ! is.null(opt[['excel2011comp']]), noplusminus = ! is.null(opt[['excel2011comp']]))
+main.output <- MsDbOutputDataFrameStream$new(keep.unused = ! is.null(opt[['same-cols']]), output.fields = opt[['output-col-names']], one.line = ! is.null(opt[['same-rows']]), match.sep = opt[['molids-sep']], first.val = ! is.null(opt[['first-val']]), ascii = ! is.null(opt[['excel2011comp']]), nogreek = ! is.null(opt[['excel2011comp']]), noapostrophe = ! is.null(opt[['excel2011comp']]), noplusminus = ! is.null(opt[['excel2011comp']]), rtunit = opt[['rtunit']])
+peaks.output <- MsDbOutputDataFrameStream$new(keep.unused = ! is.null(opt[['same-cols']]), output.fields = opt[['output-col-names']], first.val = ! is.null(opt[['first-val']]), ascii = ! is.null(opt[['excel2011comp']]), nogreek = ! is.null(opt[['excel2011comp']]), noapostrophe = ! is.null(opt[['excel2011comp']]), noplusminus = ! is.null(opt[['excel2011comp']]), rtunit = opt[['rtunit']])
 invisible(db$setInputStream(input.stream))
 db$addOutputStreams(c(main.output, peaks.output))
 
