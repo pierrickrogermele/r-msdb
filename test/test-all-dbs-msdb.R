@@ -199,6 +199,7 @@ test.search.mzrt <- function() {
 	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 100)
 	checkTrue(length(mzvals) <= 100)
 
+	found_test <- FALSE
 	for (mz in mzvals) {
 		if ( ! is.na(mz)) {
 
@@ -227,10 +228,17 @@ test.search.mzrt <- function() {
 
 # TODO Find good mz and badmz, goodrt and badrt, and run a search with (mz = c(goodmz, goodmz, badmz, badmz), rt = c(goodrt, badrt, goodrt, badrt)).
 
-						return(NULL) # Make test not too long: stop at the first mz whose compound has retention times.
+						found_test <- TRUE
+						break
 					}
+				if (found_test)
+					break
 			}
+			if (found_test)
+				break
 		}
+		if (found_test)
+			break
 	}
 }
 
