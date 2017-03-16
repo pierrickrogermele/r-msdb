@@ -123,7 +123,7 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 	# MAKE INPUT DATA FRAME #
 	#########################
 
-	msdb.make.input.df <- function(mz, rt = NULL) {
+	msdb.make.input.df <- function(mz, rt = NULL, rtunit = MSDB.RTUNIT.SEC) {
 
 		field <- msdb.get.dft.input.fields()
 
@@ -139,6 +139,8 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 
 		# Set rt
 		if ( ! is.null(rt)) {
+			if (rtunit == MSDB.RTUNIT.MIN)
+				rtunit <- rtunit * 60
 			if (length(rt) > 1)
 				x[seq(rt), field[[MSDB.TAG.RT]]] <- rt
 			else if (length(rt) == 1)

@@ -6,14 +6,31 @@ test.searchmz.peakforest.estelle.20170314 <- function() {
 	call.search.mz(c('-d', 'peakforest', '--url', 'https://peakforest-alpha.inra.fr/rest', '--db-token', ENV[['RMSBD_PEAKFOREST_TOKEN']], '-m', 'pos', '-p', '5', '-s', '0', '-i', 'res/peakforest.estelle.20170314-input.tsv', '--input-col-names', 'mz=mzmed,rt=rtmed', '-o', 'peakforest.estelle.20170314-output.tsv', '--peak-output-file', 'peakforest.estelle.20170314-output-peaks.tsv', '--html-output-file', 'peakforest.estelle.20170314-output.html'), use.global.conn.flags = FALSE)
 }
 
-test.searchmz.peakforest.estelle.20170316.rtunit.min <- function() {
-	call.search.mz(c('-d', 'peakforest', '--url' ,'https://peakforest-alpha.inra.fr/rest', '--db-token', ENV[['RMSBD_PEAKFOREST_TOKEN']], '-m', 'pos', '-p', '5', '-s', '0', '-i', 'res/2017-03-16-estelle-rtunit.min/input.tsv', '--input-col-names', 'mz=mzmed,rt=rtmed', '-o', 'peakforest.estelle.20170316.rtunit.min-output.tsv', '--peak-output-file', 'peakforest.estelle.20170316.rtunit.min-output-peaks.tsv', '--html-output-file', 'peakforest.estelle.20170316.rtunit.min-output.html', '--rtunit', 'min', '--all-cols', '--rttolx', '5', '--rttoly', '0.8'), use.global.conn.flags = FALSE)
+test.searchmz.peakforest.estelle.20170316.rtunit <- function() {
+
+	res.name <- '2017-03-16-estelle-rtunit'
+	res.dir <- file.path(dirname(script.path), 'res', res.name)
+	min.input <- file.path(res.dir, 'min-input.tsv')
+	min.main.output <- file.path(dirname(script.path), paste(res.name, 'min', 'main.tsv', sep = '-'))
+	min.peak.output <- file.path(dirname(script.path), paste(res.name, 'min', 'peak.tsv', sep = '-'))
+	min.html.output <- file.path(dirname(script.path), paste(res.name, 'min', 'html', sep = '.'))
+	sec.input <- file.path(res.dir, 'sec-input.tsv')
+	sec.main.output <- file.path(dirname(script.path), paste(res.name, 'sec', 'main.tsv', sep = '-'))
+	sec.peak.output <- file.path(dirname(script.path), paste(res.name, 'sec', 'peak.tsv', sep = '-'))
+	sec.html.output <- file.path(dirname(script.path), paste(res.name, 'sec', 'html', sep = '.'))
+
+	call.search.mz(c('-d', 'peakforest', '--url' ,'https://peakforest-alpha.inra.fr/rest', '--db-token', ENV[['RMSBD_PEAKFOREST_TOKEN']], '-m', 'pos', '-p', '5', '-s', '0', '-i', min.input, '--input-col-names', 'mz=mzmed,rt=rtmed', '-o', min.main.output, '--peak-output-file', min.peak.output, '--html-output-file', min.html.output, '--rtunit', 'min', '--all-cols', '--rttolx', '5', '--rttoly', '0.8', '--check-cols', '--same-rows', '--same-cols', '--no-main-table-in-html-output'), use.global.conn.flags = FALSE)
+
+	call.search.mz(c('-d', 'peakforest', '--url' ,'https://peakforest-alpha.inra.fr/rest', '--db-token', ENV[['RMSBD_PEAKFOREST_TOKEN']], '-m', 'pos', '-p', '5', '-s', '0', '-i', sec.input, '--input-col-names', 'mz=mzmed,rt=rtmed', '-o', sec.main.output, '--peak-output-file', sec.peak.output, '--html-output-file', sec.html.output, '--rtunit', 'sec', '--all-cols', '--rttolx', '5', '--rttoly', '0.8', '--check-cols', '--same-rows', '--same-cols', '--no-main-table-in-html-output'), use.global.conn.flags = FALSE)
 
 	# Check that output file contains at least one match
-}
-
-test.searchmz.peakforest.estelle.20170316.rtunit.sec <- function() {
-	call.search.mz(c('-d', 'peakforest', '--url' ,'https://peakforest-alpha.inra.fr/rest', '--db-token', ENV[['RMSBD_PEAKFOREST_TOKEN']], '-m', 'pos', '-p', '5', '-s', '0', '-i', 'res/2017-03-16-estelle-rtunit.sec/input.tsv', '--input-col-names', 'mz=mzmed,rt=rtmed', '-o', 'peakforest.estelle.20170316.rtunit.sec-output.tsv', '--peak-output-file', 'peakforest.estelle.20170316.rtunit.sec-output-peaks.tsv', '--html-output-file', 'peakforest.estelle.20170316.rtunit.sec-output.html', '--all-cols', '--rttolx', '5', '--rttoly', '0.8'), use.global.conn.flags = FALSE)
-
-	# Check that output file contains at least one match
+	sec.peaks <- read.table(sec.peak.output, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+	min.peaks <- read.table(min.peak.output, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+	checkTrue(MSDB.TAG.MOLID %in% colnames(sec.peaks))
+	checkTrue(any( ! is.na(sec.peaks[[MSDB.TAG.MOLID]])))
+	checkTrue(MSDB.TAG.MOLID %in% colnames(min.peaks))
+	checkTrue(any( ! is.na(min.peaks[[MSDB.TAG.MOLID]])))
+	checkTrue(nrow(sec.peaks) == nrow(min.peaks))
+	checkTrue(ncol(sec.peaks) == ncol(min.peaks))
+	checkIdentical(sec.peaks[[MSDB.TAG.MOLID]], min.peaks[[MSDB.TAG.MOLID]])
 }

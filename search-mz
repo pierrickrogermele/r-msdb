@@ -530,7 +530,7 @@ if ( ! opt[['input-col-names']][['mz']] %in% colnames(input))
 
 # Set columns 'all-cols' specified
 if ( ! is.null(opt[['all-cols']]))
-	opt$rtcol <- db$getChromCol()
+	opt$rtcol <- db$getChromCol()[['id']]
 
 # Check chrom columns
 if ( ! is.null(opt[['check-cols']]) && ! is.null(opt$rtcol)) {

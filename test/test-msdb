@@ -19,7 +19,7 @@ source(file.path(dirname(script.path), '..', '..', 'r-biodb', 'R', 'BiodbFactory
 # CONSTANTS #
 #############
 
-PEAKFOREST.URL <- 'https://rest.peakforest.org/'
+PEAKFOREST.URL <- 'https://peakforest-alpha.inra.fr/rest'
 USERAGENT <- 'r-msdb.test ; pierrick.roger@gmail.com'
 
 ENV <- Sys.getenv()

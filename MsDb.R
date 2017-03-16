@@ -151,6 +151,14 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 		.rt.unit <<- unit
 	})
 
+	###############
+	# GET RT UNIT #
+	###############
+
+	MsDb$methods( getRtUnit = function(unit) {
+		return(.self$.rt.unit)
+	})
+
 	####################
 	# HANDLE COMPOUNDS #
 	####################

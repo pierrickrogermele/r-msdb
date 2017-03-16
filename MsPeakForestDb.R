@@ -287,15 +287,15 @@ if ( ! exists('MsPeakForestDb')) { # Do not load again if already loaded
 			rt.res <- data.frame(MSDB.TAG.MOLID = character(), MSDB.TAG.COL = character(), MSDB.TAG.COLRT = numeric())
 
 			if (nrow(results) > 0) {
+
 				# Build URL for rt search
-				url <- paste0('spectra/lcms/range-rt-min/', rt.low, '/', rt.high)
+				url <- paste0('spectra/lcms/range-rt-min/', rt.low / 60, '/', rt.high / 60)
 				params <- NULL
 				if ( ! is.null(col))
-					params <- c(columns = paste(col[['id']], collapse = ','))
+					params <- c(columns = paste(col, collapse = ','))
 
 				# Run query
 				rtspectra <- .self$.get.url(url = url, params = params)
-
 
 				# Get compound/molecule IDs
 				for (x in rtspectra)
