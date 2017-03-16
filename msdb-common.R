@@ -47,7 +47,7 @@ if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 	MSDB.MZTOLUNIT.VALS <- c(MSDB.MZTOLUNIT.PPM, MSDB.MZTOLUNIT.PLAIN)
 
 	# Authorized rt units
-	MSDB.RTUNIT.SEC <- 's'
+	MSDB.RTUNIT.SEC <- 'sec'
 	MSDB.RTUNIT.MIN <- 'min'
 	MSDB.RTUNIT.VALS <- c(MSDB.RTUNIT.SEC ,MSDB.RTUNIT.MIN)
 
