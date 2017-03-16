@@ -55,6 +55,7 @@ test.searchmz.filedb.rtunit <- function() {
 
 	res.name <- 'filedb'
 	res.dir <- file.path(dirname(script.path), 'res', res.name)
+	nb.match <- NA_integer_
 	for (db.rtunit in MSDB.RTUNIT.VALS) {
 
 		file.db <- file.path(res.dir, paste('filedb-rt', db.rtunit, '.tsv', sep = ''))
@@ -74,6 +75,10 @@ test.searchmz.filedb.rtunit <- function() {
 			peak <- read.table(peak.output, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 			checkTrue(any( ! is.na(main[[MSDB.TAG.MOLID]])))
 			checkTrue(any( ! is.na(peak[[MSDB.TAG.MOLID]])))
+			if (is.na(nb.match))
+				nb.match <- sum(! is.na(peak[[MSDB.TAG.MOLID]]))
+			else
+				checkEquals(sum(! is.na(peak[[MSDB.TAG.MOLID]])), nb.match)
 		}
 	}
 }

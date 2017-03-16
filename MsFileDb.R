@@ -396,8 +396,8 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 
 		# Filter on retention time
 		if ( ! is.null(rt.low) && ! is.na(rt.low) && ! is.null(rt.high) && ! is.na(rt.high)) {
-			scale <- if (.self$.rt.unit == MSDB.RTUNIT.MIN) 60 else 1
-			db <- db[db[[MSDB.TAG.COLRT]] * scale >= rt.low & db[[MSDB.TAG.COLRT]] <= rt.high, ]
+			scale <- if (.self$getRtUnit() == MSDB.RTUNIT.MIN) 60 else 1
+			db <- db[db[[MSDB.TAG.COLRT]] * scale >= rt.low & db[[MSDB.TAG.COLRT]] * scale <= rt.high, ]
 		}
 
 		# Remove retention times and column information
@@ -410,19 +410,6 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 
 		# Filter on mz
 		db <- db[db[[MSDB.TAG.MZTHEO]] >= mz.low & db[[MSDB.TAG.MZTHEO]] <= mz.high, ]
-
-		# Rename database fields
-#		conv <- c( mz = 'mztheo', rt = 'colrt') # solving mismatch of field names between database and output
-#		cols <- colnames(db)
-#		for (db.field in names(.self$.fields)) {
-#			output.field <- if (db.field %in% names(conv)) conv[[db.field]] else db.field
-#			if (.self$.fields[[db.field]] %in% cols && output.field %in% names(.self$.output.fields))
-#				cols[cols %in% .self$.fields[[db.field]]] <- .self$.output.fields[[output.field]]
-#		}
-#		colnames(db) <- cols
-
-		# Remove unwanted columns
-#		db <- db[, colnames(db) %in% .self$.output.fields]
 
 		return(db)
 	})
@@ -489,7 +476,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 			rt[col] <- list(colrts)
 		}
 
-		if (.self$.rt.unit == MSDB.RTUNIT.MIN)
+		if (.self$getRtUnit() == MSDB.RTUNIT.MIN)
 			rt <- 60 * rt
 
 		return(rt)
