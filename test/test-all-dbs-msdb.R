@@ -208,31 +208,37 @@ test.search.mzrt <- function() {
 			checkTrue(nrow(r) >= 1)
 			checkTrue(MSDB.TAG.MOLID %in% colnames(r))
 			checkTrue(class(r[[MSDB.TAG.MOLID]]) == 'character')
+			checkTrue(any( ! is.na(r[[MSDB.TAG.MOLID]])))
 
 			# Loop on all molids obtained
 			for (molid in r[[MSDB.TAG.MOLID]]) {
 
-				# Get retention times of molecule
-				rts <- get.db()$getRetentionTimes(molid)
+				if ( ! is.na(molid)) {
+					# Get retention times of molecule
+					rts <- get.db()$getRetentionTimes(molid)
+					print(rts)
 
-				# Loop on all columns
-				for (col in names(rts))
-					for (rt in rts[[col]]) {
-						r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, shift = 0, col = col, rt.tol.x = 5, rt.tol.y = 0.8)
-						checkTrue(nrow(r) >= 1)
-						checkTrue(MSDB.TAG.RT %in% colnames(r))
-						checkTrue(MSDB.TAG.COL %in% colnames(r))
-						checkTrue(MSDB.TAG.COLRT %in% colnames(r))
-						checkTrue(any( ! is.na(r[[MSDB.TAG.COL]])))
-						checkTrue(any( ! is.na(r[[MSDB.TAG.COLRT]])))
+					# Loop on all columns
+					for (col in names(rts))
+						for (rt in rts[[col]]) {
+							r <- get.db()$searchForMzRtList(x = msdb.make.input.df(mz = mz, rt = rt), mode = MSDB.TAG.POS, prec = 5, shift = 0, col = col, rt.tol.x = 5, rt.tol.y = 0.8)
+							checkTrue(nrow(r) >= 1)
+							checkTrue(MSDB.TAG.RT %in% colnames(r))
+							checkTrue(MSDB.TAG.COL %in% colnames(r))
+							checkTrue(MSDB.TAG.COLRT %in% colnames(r))
+							print(r)
+							checkTrue(any( ! is.na(r[[MSDB.TAG.COL]])))
+							checkTrue(any( ! is.na(r[[MSDB.TAG.COLRT]])))
 
-# TODO Find good mz and badmz, goodrt and badrt, and run a search with (mz = c(goodmz, goodmz, badmz, badmz), rt = c(goodrt, badrt, goodrt, badrt)).
+							found_test <- TRUE
+							break
+						}
 
-						found_test <- TRUE
+					# 
+
+					if (found_test)
 						break
-					}
-				if (found_test)
-					break
+				}
 			}
 			if (found_test)
 				break
