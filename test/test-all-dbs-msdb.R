@@ -222,6 +222,8 @@ test.search.mzrt <- function() {
 						checkTrue(MSDB.TAG.RT %in% colnames(r))
 						checkTrue(MSDB.TAG.COL %in% colnames(r))
 						checkTrue(MSDB.TAG.COLRT %in% colnames(r))
+						checkTrue(any( ! is.na(r[[MSDB.TAG.COL]])))
+						checkTrue(any( ! is.na(r[[MSDB.TAG.COLRT]])))
 
 # TODO Find good mz and badmz, goodrt and badrt, and run a search with (mz = c(goodmz, goodmz, badmz, badmz), rt = c(goodrt, badrt, goodrt, badrt)).
 
