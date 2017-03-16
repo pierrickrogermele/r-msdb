@@ -131,7 +131,7 @@ call.search.mz <- function(opt, silent = FALSE, use.global.conn.flags = TRUE) {
 	# TODO Add option to choose search-mz script.
 
 	if (use.global.conn.flags && is.null(.g.conn.flag))
-		stop("No connexion flags provided for search-mz.")
+		stop("No connection flags provided for search-mz.")
 
 	# Set program path
 	prog <- .g.search.mz.script
