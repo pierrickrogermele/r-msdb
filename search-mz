@@ -143,31 +143,6 @@ parse.arg.val <- function(opt) {
 	return(opt)
 }
 
-#################################
-# PRINT DEFAULT ARGUMENT VALUES #
-#################################
-
-print.dft.arg.val <- function(opt) {
-
-	print.flags <- DEFAULT.ARG.VALUES
-	names(print.flags) <- vapply(names(print.flags), function(x) paste0('print-', x), FUN.VALUE = '')
-	for (f in names(print.flags))
-		if ( ! is.null(opt[[f]])) {
-			cat(print.flags[[f]])
-			q(status = 0)
-		}
-}
-
-make.getopt.spec.print.dft <- function() {
-
-	spec <- character()
-
-	for (f in names(DEFAULT.ARG.VALUES))
-		spec <- c(spec, paste0('print-', f), NA_character_, 0, 'logical', paste0('Print default value of --', f))
-
-	return(spec)
-}
-
 ##############################
 # MAKE GETOPT SPECIFICATIONS #
 ##############################
@@ -216,8 +191,6 @@ make.getopt.spec <- function() {
 		'debug',            NA_character_,  0,  'logical',      'Set debug mode.'
 		)
 
-	spec <- c(spec, make.getopt.spec.print.dft())	
-
 	if ( ! is.null(spec))
 		spec <- matrix(spec, byrow = TRUE, ncol = 5)
 
@@ -238,7 +211,6 @@ read_args <- function() {
 	if ( ! is.null(opt$help))
 		print.help(spec)
 
-	print.dft.arg.val(opt) # Print default values
 	opt <- set.dft.arg.val(opt) # Set default values
 	opt <- parse.arg.val(opt) # Parse list values
 
@@ -283,16 +255,6 @@ read_args <- function() {
 	#####################################
 	
 	.check.db.conn.opts <- function(opt) {
-
-		# Print default values
-		if ( ! is.null(opt[['print-db-fields']])) {
-			cat(MSDB.DFT[['db-fields']])
-			q(status = 0)
-		}
-		if ( ! is.null(opt[['print-db-ms-modes']])) {
-			cat(MSDB.DFT[['db-ms-modes']])
-			q(status = 0)
-		}
 	
 		# Check values
 		error <- FALSE
