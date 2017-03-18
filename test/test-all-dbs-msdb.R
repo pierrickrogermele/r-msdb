@@ -253,7 +253,6 @@ test.precursor.search.mz <- function() {
 
 	# Get some mzvals
 	mzvals <- get.db()$getMzValues(mode = MSDB.TAG.POS, max.results = 10)
-	print(mzvals)
 	checkTrue(length(mzvals) <= 10)
 
 	# Loop on all mz values obtained
