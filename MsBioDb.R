@@ -2,8 +2,8 @@ if ( ! exists('MsBioDb')) { # Do not load again if already loaded
 
 	library(methods)
 	source('MsDb.R')
-	source(file.path('..', 'r-biodb', 'R', 'BiodbObject.R'), chdir = TRUE)
-	source(file.path('..', 'r-biodb', 'R', 'BiodbFactory.R'), chdir = TRUE)
+	source('BiodbObject.R', chdir = TRUE)
+	source('BiodbFactory.R', chdir = TRUE)
 
 	#####################
 	# CLASS DECLARATION #

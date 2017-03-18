@@ -2,7 +2,7 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 
 	library(methods)
 	source('MsDbOutputStream.R')
-	source('../r-lib/dfhlp.R', chdir = TRUE)
+	source('dfhlp.R', chdir = TRUE)
 
 	#####################
 	# CLASS DECLARATION #
@@ -67,17 +67,18 @@ if ( ! exists('MsDbOutputDataFrameStream')) { # Do not load again if already loa
 		if ( ! is.null(peaks)) {
 
 			# No rows
-			if (nrow(peaks) == 0)
+			if (nrow(peaks) == 0) {
 				# Add NA values
 				peaks[1, ] <- NA
 
-			# Convert RT
-			if (.self$.rtunit == MSDB.RTUNIT.MIN)
-				if (MSDB.TAG.COLRT %in% colnames(peaks))
-					peaks[[MSDB.TAG.COLRT]] <- peaks[[MSDB.TAG.COLRT]] / 60
-
 			# Process existing rows
-			else {
+			} else {
+
+				# Convert RT
+				if (.self$.rtunit == MSDB.RTUNIT.MIN)
+					if (MSDB.TAG.COLRT %in% colnames(peaks))
+						peaks[[MSDB.TAG.COLRT]] <- peaks[[MSDB.TAG.COLRT]] / 60
+
 				# Process multi-value fields
 				for (c in colnames(peaks))
 					if (c %in% MSDB.MULTIVAL.FIELDS) {

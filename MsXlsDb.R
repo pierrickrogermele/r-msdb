@@ -4,10 +4,10 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 	library('stringr')
 	source('msdb-common.R')
 	source('MsDb.R')
-	source('../r-lib/strhlp.R', chdir = TRUE)
-	source('../r-lib/dfhlp.R', chdir = TRUE)
-	source('../r-lib/search.R', chdir = TRUE)
-	source('../r-lib/excelhlp.R', chdir = TRUE)
+	source('strhlp.R', chdir = TRUE)
+	source('dfhlp.R', chdir = TRUE)
+	source('search.R', chdir = TRUE)
+	source('excelhlp.R', chdir = TRUE)
 	
 	#############
 	# CONSTANTS #
@@ -611,7 +611,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 		# Load from Excel file & write to cache
 		if (is.null(mol) && ! is.na(excel_file)) {
 
-			source(file.path(.THIS.FILE.PATH, '../r-lib/excelhlp.R'), chdir = TRUE) # we use the path set when sourcing the file, since when calling this method, the current path could be different.
+			source(file.path(.THIS.FILE.PATH, 'excelhlp.R'), chdir = TRUE) # we use the path set when sourcing the file, since when calling this method, the current path could be different.
 
 			# Load from Excel file
 			for(tab in c(.XLS_MSPOS_TAB, .XLS_MSNEG_TAB)) {
@@ -651,7 +651,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 	
 	MsXlsDb$methods( .tab.exists = function(file, tab) {
 	
-		source(file.path(.THIS.FILE.PATH, '../r-lib/excelhlp.R'), chdir = TRUE) # we use the path set when sourcing the file, since when calling this method, the current path could be different.
+		source(file.path(.THIS.FILE.PATH, 'excelhlp.R'), chdir = TRUE) # we use the path set when sourcing the file, since when calling this method, the current path could be different.
 	
 		if ( ! tab.exists(file, tab)) {
 

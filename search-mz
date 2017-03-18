@@ -11,11 +11,11 @@ source(file.path(dirname(script.path), 'Ms4TabSqlDb.R'), chdir = TRUE)
 source(file.path(dirname(script.path), 'MsDbLogger.R'), chdir = TRUE)
 source(file.path(dirname(script.path), 'MsDbInputDataFrameStream.R'), chdir = TRUE)
 source(file.path(dirname(script.path), 'MsDbOutputDataFrameStream.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-lib/htmlhlp.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-lib/strhlp.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-lib/fshlp.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '../r-biodb/R/biodb-common.R'), chdir = TRUE)
-source(file.path(dirname(script.path), '..', 'r-lib', 'nethlp.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'htmlhlp.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'strhlp.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'fshlp.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'biodb-common.R'), chdir = TRUE)
+source(file.path(dirname(script.path), 'nethlp.R'), chdir = TRUE)
 
 # Missing paste0() function in R 2.14.1
 if (as.integer(R.Version()$major) == 2 && as.numeric(R.Version()$minor) < 15)
@@ -376,8 +376,10 @@ output.html <- function(db, main, peaks, file, opt, output.fields) {
 			field <- output.fields[[extdb]]
 			if ( ! is.null(peaks) && field %in% colnames(peaks))
 				peaks[[field]] <- vapply(peaks[[field]], function(id) if (is.na(id)) '' else paste0('<a href="', get.entry.url(class = extdb2classdb[[extdb]], accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = '')
-			if ( ! is.null(main) && field %in% colnames(main))
+			if ( ! is.null(main) && field %in% colnames(main)) {
+				main[[field]] <- as.character(main[[field]])
 				main[[field]] <- vapply(main[[field]], function(ids) if (is.na(ids) || nchar(ids) == 0) '' else paste(vapply(strsplit(ids, opt[['molids-sep']])[[1]], function(id) paste0('<a href="', get.entry.url(class = extdb2classdb[[extdb]], accession = id, content.type = BIODB.HTML), '">', id, '</a>'), FUN.VALUE = ''), collapse = opt[['molids-sep']]), FUN.VALUE = '')
+			}
 		}
 	}
 

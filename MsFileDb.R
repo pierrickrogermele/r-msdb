@@ -3,7 +3,7 @@ if ( ! exists('MsFileDb')) { # Do not load again if already loaded
 	library('methods')
 	source('MsDb.R')
 	source('msdb-common.R')
-	source('../r-lib/search.R', chdir = TRUE)
+	source('search.R', chdir = TRUE)
 
 	#####################
 	# CLASS DECLARATION #

@@ -1,8 +1,8 @@
 if ( ! exists('.parse_chrom_col_desc')) { # Do not load again if already loaded
 
 	library('stringr')
-	source('../r-lib/strhlp.R', chdir = TRUE)
-	source('../r-biodb/R/biodb-common.R', chdir = TRUE)
+	source('strhlp.R', chdir = TRUE)
+	source('biodb-common.R', chdir = TRUE)
 
 	#############
 	# CONSTANTS #
