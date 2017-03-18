@@ -319,8 +319,6 @@ if ( ! exists('MsDb')) { # Do not load again if already loaded
 #				peaks <- rbind(peaks, peaks.na)
 #
 #				# Sort
-#				print(colnames(peaks))
-#				print(x.colnames)
 #				peaks <- peaks[order(peaks[[x.colnames$mz]], peaks[[x.colnames$rt]], peaks[[MSDB.TAG.MOLID]], peaks[[MSDB.TAG.COL]]), ]
 #
 #				# Remove rownames

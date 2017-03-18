@@ -56,13 +56,17 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 	# GET MOLECULE IDS #
 	####################
 	
-	MsXlsDb$methods( getMoleculeIds = function() {
+	MsXlsDb$methods( getMoleculeIds = function(max.results = NA_integer_) {
 	
 		# Init file list
 		.self$.init.file.list()
 
 		# Get IDs
 		mol.ids <- as.integer(which( ! is.na(.self$.files)))
+
+		# Cut
+		if ( ! is.na(max.results) && length(mol.ids) > max.results)
+			mol.ids <- mol.ids[max.results, ]
 
 		return(mol.ids)
 	})
@@ -801,6 +805,7 @@ if ( ! exists('MsXlsDb')) { # Do not load again if already loaded
 			mols <- .self$getMoleculeIds()
 
 		results <- data.frame(id = integer(), col = character(), colrt = double(), stringsAsFactors = FALSE)
+		colnames(results) <- c(MSDB.TAG.MOLID, MSDB.TAG.COL, MSDB.TAG.COLRT)
 
 		# Loop on all molecules
 		for (molid in mols) {
