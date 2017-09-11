@@ -394,7 +394,8 @@ output.html <- function(db, main, peaks, file, opt, output.fields) {
 		}
 
 	# Write HTML
-	html <- HtmlWriter(file = file)
+	html <- HtmlWriter()
+	html$open(file = file)
 	html$writeBegTag('html')
 	html$writeBegTag('header')
 	html$writeTag('title', text = "LC/MS matching results")
@@ -449,6 +450,8 @@ output.html <- function(db, main, peaks, file, opt, output.fields) {
 
 	html$writeEndTag('body')
 	html$writeEndTag('html')
+
+	html$close()
 }
 
 ########
